@@ -13,9 +13,19 @@
   "skills": "./skills/",
   "interface": {
     "displayName": "cerby",
-    "shortDescription": "The gate guardian for agentic coding — loadable rules + opt-in guardrail hooks.",
+    "shortDescription": "The gate guardian for agentic coding: loadable rules plus opt-in guardrail hooks.",
+    "longDescription": "cerby packages coding guardrails for Codex sessions. Use it to load a rule corpus, prepare repositories for disciplined agentic coding, install opt-in hooks, reload rules after compaction, or audit whether a repo follows the expected workflow.",
     "developerName": "sorawit-w",
-    "category": "Productivity",
-    "websiteURL": "https://github.com/sorawit-w/cerby"
+    "category": "Developer Tools",
+    "capabilities": ["Interactive", "Read", "Write"],
+    "websiteURL": "https://github.com/sorawit-w/cerby",
+    "defaultPrompt": [
+      "Load cerby for this coding session.",
+      "Audit this repo against cerby coding guardrails.",
+      "Prepare this repo for disciplined agentic coding."
+    ],
+    "brandColor": "#111827",
+    "composerIcon": "./assets/cerby-avatar.png",
+    "logo": "./assets/cerby-hero.png"
   }
 }
