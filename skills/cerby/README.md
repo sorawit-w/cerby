@@ -16,7 +16,7 @@ This skill packages one person's methodology as a loadable session preamble:
 
 - A **Prime Directive** — clarity over cleverness, safety over speed, never leave the repo broken.
 - **Hard rules** that apply on every task — branching, commit discipline, verification, resource cleanup, manual-verification instructions, sub-agent delegation, ambiguity-before-cost.
-- **Routed workflows** — the agent reads the right workflow file (`new-project`, `feature`, `bugfix`, `quick-task`) instead of guessing from memory.
+- **Routed workflows** — the agent reads the right workflow file (`new-project`, `adopt-existing`, `feature`, `bugfix`, `quick-task`) instead of guessing from memory.
 - **A reference index** for the long tail of decisions — debugging, error handling, vendor adapters, knowledge-base maintenance, design tokens, multi-tool support across Claude Code / Codex / Cursor.
 - **A meta-rule** about adding rules — every proposed new rule passes a cost gate (line count, frequency, severity, coverage, testability) before it earns its place.
 
@@ -204,7 +204,7 @@ Hooks are never auto-registered at plugin install time. Specifically: the parent
 The rules themselves live under `resources/`, bundled with the skill:
 
 - **`BOOTSTRAP.md`** — the loader entry point. Prime Directive, project-state detection, workflow routing, hard rules, when-stuck, context-save, reference index. ~230 lines.
-- **`workflows/`** — task-shape playbooks: `new-project.md`, `feature.md`, `bugfix.md`, `quick-task.md`. Each wires the relevant references in the right order.
+- **`workflows/`** — task-shape playbooks: `new-project.md`, `adopt-existing.md`, `feature.md`, `bugfix.md`, `quick-task.md`. Each wires the relevant references in the right order.
 - **`references/`** — long-tail topic guides (~25 files): working patterns, quality gates, error handling, debugging, communication, git worktrees, guardrails, validation, context management, sub-agent delegation, vendor adapters, knowledge management, roadmap, hooks, multi-tool support, safety mindset, design-token authority, domain glossary.
 - **`templates/`** — starter files: `agent-context.yaml`, `STATUS.md`, `KNOWLEDGE.md`, `CONTEXT.md`.
 - **`hooks/`** — optional shell hooks for projects that want enforcement at git/session boundaries: `pre-commit-check.sh`, `protect-env.sh`, `protect-git.sh`, `session-start-context.sh`, `knowledge-bootstrap.sh`, `knowledge-reindex.sh`, `knowledge-lint.sh` (advisory `.ai/knowledge/` integrity check — manual or git post-commit, not SessionStart; `--strict` to fail on findings), `context-bootstrap.sh`. Not installed automatically — copy what you want into your project's `.git/hooks/` or session-start config.
