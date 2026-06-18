@@ -68,3 +68,7 @@ The skill-internal authoring guide lives at
 (every rule carries a recurring input-token cost; each should trace to a real past
 failure). Run `python3 scripts/check-skill-compat.py` after any frontmatter or
 version-bearing change.
+
+The product voice — how cerby *talks* in the README, verdict output, and CHANGELOG — is
+specified in [`VOICE.md`](VOICE.md). Read it before editing any persona-bearing copy; the
+rules and command references stay literal regardless (see its Zoning table).
