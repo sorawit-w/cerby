@@ -108,7 +108,7 @@ Check whether the rules are currently loaded.
 
 ## `prepare`
 
-Onboard an **existing repo** into cerby — populate (and refresh) the artifacts BOOTSTRAP's `detect_project` step reads (`agent-context.yaml`, `CONTEXT.md`, `.ai/knowledge/`, `.ai/STATUS.md`, `.ai/memory.log`) from the repo's real code and git history. This is the existing-code counterpart to `new-project.md` (greenfield) and to the resume flow in `references/workflows.md` (read-and-continue).
+Onboard an **existing repo** into cerby — populate (and refresh) the artifacts BOOTSTRAP's `detect_project` step reads (`agent-context.yaml`, `CONTEXT.md`, `.ai/knowledge/`, `.ai/STATUS.md`, `.ai/memory.log`) from the repo's real code and git history. This is the existing-code counterpart to `new-project.md` (greenfield) and to the resume flow in `references/project-entry.md` (read-and-continue).
 
 1. Resolve the bundled rule-content root the same way `load` resolves `BOOTSTRAP.md` (Glob `**/skills/cerby/resources/BOOTSTRAP.md`, else `${CERBY_DIR}/resources/BOOTSTRAP.md`, else ask). The workflow file is its sibling at `<install-root>/resources/workflows/adopt-existing.md`.
 2. **Read `resources/workflows/adopt-existing.md` in full** with the `Read` tool, then follow it. It carries the procedure: tiered population by inferability, diff-and-confirm on every write, and per-tier refresh rules that never clobber human-curated content.
