@@ -16,6 +16,8 @@ The job is one motion — **GATE → WEIGH → VERDICT**. A change arrives at th
 weighs it against the evidence. Then it passes, or it doesn't. No claim without a fresh
 test behind it. No commit on a protected branch. No secret in the diff.
 
+![cerby's one motion: a change arrives, cerby weighs it against the evidence, and the verdict is binary — the change passes or it is BLOCKED and the action stops.](assets/gate-motion.svg)
+
 The same motion runs whatever the work is — that work routes into task-shaped playbooks
 (feature, bugfix, and three more); the [skill README](skills/cerby/README.md#workflows) maps them.
 
