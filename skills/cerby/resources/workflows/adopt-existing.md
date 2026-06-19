@@ -4,7 +4,7 @@ You are onboarding an **existing repo** (real code, git history, conventions) in
 
 **This is to an existing repo what `new-project.md` is to greenfield:** it produces the same ready-state, but derived from *what is already built* (code + git history) rather than from requirements.
 
-> **Not the resume flow.** `references/workflows.md` → "Existing Project Flow" *reads* these artifacts and routes to work, assuming they exist. This workflow is the *first-time populate* that creates them. After `prepare`, future sessions use the resume flow.
+> **Not the resume flow.** `references/project-entry.md` → "Existing Project Flow" *reads* these artifacts and routes to work, assuming they exist. This workflow is the *first-time populate* that creates them. After `prepare`, future sessions use the resume flow.
 
 ---
 
@@ -25,7 +25,7 @@ You are onboarding an **existing repo** (real code, git history, conventions) in
 
 Read these before starting:
 
-1. `references/workflows.md` — the resume "Existing Project Flow" this complements
+1. `references/project-entry.md` — the resume "Existing Project Flow" this complements
 2. `references/communication.md` — canonical `memory.log` format, commit format
 3. `references/knowledge-management.md` — knowledge entry schema, `confidence` tiers, proposal workflow
 4. `references/domain-glossary.md` — what belongs in `CONTEXT.md`

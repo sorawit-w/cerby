@@ -279,7 +279,7 @@ All paths in this index are relative to the `resources/` directory where this `B
 | External skills, tools, design resources catalog | `references/external-resources.md` |
 | `DESIGN.md` authority — when present, editing safety, conflict resolution with downstream theme configs | `references/design-md.md` |
 | HTML export — opt-in self-contained HTML snapshots of Markdown docs, DESIGN.md-aware styling | `references/html-export.md` |
-| Unified project workflows (new + existing) | `references/workflows.md` |
+| Unified project workflows (new + existing) | `references/project-entry.md` |
 | Multi-session implementation planning | `references/implementation-planning.md` |
 | Automated hooks (enforcement, customization) | `references/hooks.md` |
 | Cross-tool support (Claude Code, Codex, fallbacks) | `references/multi-tool.md` |

@@ -16,6 +16,9 @@ The job is one motion — **GATE → WEIGH → VERDICT**. A change arrives at th
 weighs it against the evidence. Then it passes, or it doesn't. No claim without a fresh
 test behind it. No commit on a protected branch. No secret in the diff.
 
+The same motion runs whatever the work is — that work routes into task-shaped playbooks
+(feature, bugfix, and three more); the [skill README](skills/cerby/README.md#workflows) maps them.
+
 ## What it looks like when cerby says no
 
 This is not prose about the product. This is the product. When an agent reaches for

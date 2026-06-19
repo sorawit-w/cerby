@@ -213,7 +213,7 @@ Based on user request:
 | Need | Workflow |
 |------|----------|
 | Plan new feature or refactor | `implementation-planning.md` |
-| Execute defined tasks | `execution.md` |
+| Execute defined tasks | `working-patterns.md` |
 | Fix errors or blockers | `error-handling.md` |
 | Detect gaps in tooling | `recommendations.md` |
 

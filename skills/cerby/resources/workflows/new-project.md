@@ -7,7 +7,7 @@ You are setting up a new project from scratch. Follow these steps in order.
 
 You MUST read these before starting:
 
-1. Read `references/workflows.md` — project setup procedures
+1. Read `references/project-entry.md` — project setup procedures
 2. Read `references/communication.md` — commit format, logging, branch naming
 3. Read `references/recommendations.md` — gap detection, tool suggestions
 </pre_work>
