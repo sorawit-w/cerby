@@ -31,6 +31,12 @@ Correct response:
 
 The distinction matters: rule editing happens here, rule grading happens in skill-evaluator. Do not collapse them.
 
+### Trigger-eval fixture & the library-conventions decision
+
+`.eval/triggers/cerby.json` is a committed boundary corpus (should-fire / should-not-fire) for cerby's own triggering — notably that a general "security review of my repo" must NOT fire (`audit` is conformance-to-cerby, not a bug/security review). It does **not** contradict "ships no eval harness": the fixture is *labeled data describing cerby's intended boundary* (the skill owns it), not a runner. **Triggering accuracy is `skill-creator`'s `run_eval` job** — feed it a labeled trigger set. It is **not** `skill-evaluator`'s job; `skill-evaluator` audits rule *adherence* ("does the text land"), not triggering. **No gate auto-discovers or runs this fixture.** It is a **manual regression checklist**: when the `SKILL.md` description is edited, hand this set to `skill-creator`'s `run_eval` (or eyeball it) to confirm the boundary still holds. cerby ships the fixture, not a runner — one tool, one job.
+
+**Why the agent-skills "library-conventions" layer is not ported here** (audited 2026-06-19, `4.21.2`): cerby already implements it, often as the origin. Authority tiers → mechanically hook-enforced (`protect-git`/`protect-env`/`pre-commit-check`) + blast-radius gate tiers, stronger than a review-only `metadata.tier`. Supply-chain / provenance → `NOTICE` + dated inline citations. Eval discipline → this Eval-handoff section. Harness + control-loop vocab → root `CLAUDE.md`. The cross-skill co-load regression gate is N/A (cerby is a single skill, no routing neighbors). The state-passing / file-message-bus section lives in `sub-agent-coordinator`, which `references/sub-agent-delegation.md` already defers to — copying it here would fork what we deliberately reference. Do not re-port these; the only additive was the fixture above.
+
 ## Change classes
 
 | Change | Eval required? |

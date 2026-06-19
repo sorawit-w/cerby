@@ -185,9 +185,13 @@ playground.xcworkspace
 ### Project — agent-skills
 
 # Local skill-evaluation workspaces (eval sets, optimization-loop reports,
-# trigger-eval JSON, etc.). Useful locally for pre-shipment audits;
-# regenerated per audit run, not worth tracking.
-.eval/
+# grader traces, etc.). Useful locally for pre-shipment audits; regenerated
+# per audit run, not worth tracking — EXCEPT .eval/triggers/, the committed
+# boundary corpus for cerby's own triggering (should-fire / should-not-fire).
+# Manual regression checklist: feed to skill-creator's run_eval (or eyeball)
+# when the SKILL.md description changes. No gate auto-runs it.
+.eval/*
+!.eval/triggers/
 
 # Skill-creator iteration workspaces (per-skill eval traces, grader scripts,
 # benchmark JSON, viewer HTML, run logs, packaged .skill bundles). Useful

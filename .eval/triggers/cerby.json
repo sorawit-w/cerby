@@ -1,0 +1,19 @@
+[
+  {"query": "/cerby", "should_trigger": true},
+  {"query": "/cerby status", "should_trigger": true},
+  {"query": "load cerby into this session", "should_trigger": true},
+  {"query": "reload cerby, my context got compacted", "should_trigger": true},
+  {"query": "install cerby in this repo", "should_trigger": true},
+  {"query": "is cerby still loaded?", "should_trigger": true},
+  {"query": "onboard this existing repo into cerby", "should_trigger": true},
+  {"query": "uninstall the cerby guardrails from this project", "should_trigger": true},
+  {"query": "audit my repo against the cerby rules", "should_trigger": true},
+  {"query": "does this repo conform to cerby?", "should_trigger": true},
+  {"query": "fix this failing test in src/utils/date.ts", "should_trigger": false},
+  {"query": "implement a login feature with JWT", "should_trigger": false},
+  {"query": "refactor this module to reduce duplication", "should_trigger": false},
+  {"query": "do a security review of my repo and find vulnerabilities", "should_trigger": false},
+  {"query": "review my code for bugs", "should_trigger": false},
+  {"query": "what's the best way to structure my React components?", "should_trigger": false},
+  {"query": "audit my AWS IAM policies for over-broad permissions", "should_trigger": false}
+]

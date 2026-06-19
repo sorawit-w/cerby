@@ -106,8 +106,10 @@ These are not decoration. They are what every verdict comes back to:
 
 ## Status
 
-Current release: `4.21.1` — patch on the first `cerby`-named release (extracted and
-renamed from `coding-rules`; see [CHANGELOG.md](CHANGELOG.md)).
+Current release: `4.21.2` — adds a committed trigger-eval boundary corpus
+(`.eval/triggers/cerby.json`) protecting cerby's "don't fire on general coding"
+triggering boundary, plus a recorded decision not to port the agent-skills
+library-conventions layer (cerby already implements it). See [CHANGELOG.md](CHANGELOG.md).
 
 **Opinionated — read first.** These are one author's rules. Read
 [`skills/cerby/resources/BOOTSTRAP.md`](skills/cerby/resources/BOOTSTRAP.md) end-to-end
