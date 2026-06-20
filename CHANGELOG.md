@@ -27,9 +27,11 @@ structurally identical report.
   `<code>` element (Markdown backtick spans are inert inside the passed-through block —
   §8 step 2's backtick rule governs Markdown body text, not cell content).
 - **`references/audit.md` §7** — the report skeleton is pinned to one exact top-to-bottom
-  order (title → banner → summary → per-dimension tables → footer). The banner is emitted
-  as raw HTML. Zero-findings renders the banner + "No violations among the statically-checkable
-  rules in scope" — never a bare ✓.
+  order (title → banner → summary → per-dimension tables → footer). Dimension sections
+  follow the §10 stable-map order and same-severity rows tie-break by Location, so the
+  ordering is *total* (no filesystem/git-discovery drift between runs). The banner is
+  emitted as raw HTML. Zero-findings renders the banner + "No violations among the
+  statically-checkable rules in scope" — never a bare ✓.
 - **`references/audit.md` §8** — the render now wraps in `audit-report.html.template`. The
   untrusted-input escaping + self-check obligations are unchanged.
 - **`references/html-export.md`** — the "one sanctioned exception" note now says the audit

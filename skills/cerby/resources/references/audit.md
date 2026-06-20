@@ -131,7 +131,7 @@ Draft the report as Markdown, then write it under `.ai/audits/` (HTML rendering:
 1. `# <title>` (repo name) — also fills `{{TITLE}}`.
 2. **Coverage banner** (`<div class="banner">`) — mandatory, always first. The audit's honesty signal.
 3. One-line summary: `**N findings** — X blocker, Y major, Z minor` (or the zero-findings line below).
-4. Per-dimension `## <Dimension>` section, each with one `table.findings` (§6) sorted **blocker → major → minor**. A dimension with no findings renders `<p class="none">— no findings in these dimensions —</p>`.
+4. Per-dimension `## <Dimension>` section **in the §10 stable-map order** (`security → quality → data → git-hygiene → docs`; any novel dimension last, alphabetically), each with one `table.findings` (§6). Rows sort **blocker → major → minor**, and **within one severity, by Location** — file path lexicographically ascending, then line number ascending; commit-SHA findings after file findings, ordered by SHA. This total order (sections + rows) is what makes two runs byte-identical — never emit dimensions or same-severity rows in filesystem or git-discovery order. A dimension with no findings renders `<p class="none">— no findings in these dimensions —</p>`.
 5. Footer: `### Not statically auditable (process-only)` + `### Not run` lists.
 
 **Coverage banner (three-way, never binary).** Emit it as a **raw HTML block** so it survives every converter untouched:
