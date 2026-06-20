@@ -59,6 +59,33 @@ If you need a hook-equivalent in Codex, write it as a shell command in Codex's c
 
 ---
 
+## GitHub Copilot — hookless, advisory-only
+
+Some teams are *required* to use Copilot (org mandate, no opt-out). Copilot is a harder case than Codex or Cursor on two axes:
+
+- **No hooks.** Like Codex and Cursor, Copilot never invokes `hooks/*.sh`. The entire mechanical-enforcement half of kerby (`pre-commit-check`, `protect-env`, `protect-git`) does not fire.
+- **Weaker rule adherence.** In practice Copilot attends to less of a long context than Claude Code or Codex. Loading the full corpus *plus* extra contract text makes adherence worse, not better — on a weak harness, rule-count dilutes attention.
+
+**Consequence — set expectations honestly: on Copilot, kerby is advisory, not enforced.** Do not trust output as if a gate ran. The human reviewer is the substitute for the missing hooks.
+
+**Delivery.** Copilot reads `.github/copilot-instructions.md` and won't reliably chase reference files. Don't point it at the full `BOOTSTRAP.md` and expect compliance — give it a short, front-loaded kernel in that file. Recommended minimum:
+
+```markdown
+## Before writing code — state this (Copilot has no kerby hooks; you are the gate)
+
+- **Workflow:** feature / fix / refactor
+- **Done means:** the one check that proves this works — a test name, a command, or "open X and see Y"
+- **Not checked:** what I am NOT verifying this pass
+
+No hook will catch a skipped check here. A human must read this block and the
+evidence before the change is trusted. If the evidence can't be produced, the
+change is unproven — say so; don't claim done.
+```
+
+This is kerby's Iron Law ("no completion claims without fresh evidence") compressed to what a weak, hookless harness can hold. It deliberately drops the longer "operating-contract acknowledgement" pattern, which fails twice on Copilot: a runtime can't "acknowledge" anything, and adding contract text to a harness that already skips rules just spends tokens it won't read. Front-load the kernel instead, and rely on the human as the gate.
+
+---
+
 ## Keeping Multiple Context Files in Sync
 
 The symlink approach makes this automatic. If you chose pointer files instead (e.g., for Windows), add a check to your CI or a pre-commit hook that compares SHAs:

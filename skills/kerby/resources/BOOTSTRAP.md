@@ -282,7 +282,7 @@ All paths in this index are relative to the `resources/` directory where this `B
 | Unified project workflows (new + existing) | `references/project-entry.md` |
 | Multi-session implementation planning | `references/implementation-planning.md` |
 | Automated hooks (enforcement, customization) | `references/hooks.md` |
-| Cross-tool support (Claude Code, Codex, fallbacks) | `references/multi-tool.md` |
+| Cross-tool support (Claude Code, Codex, Copilot advisory-mode, fallbacks) | `references/multi-tool.md` |
 | Safety mindset, decision filters, engineering ethics | `references/safety-mindset.md` |
 | Project knowledge base — decisions, context, conventions, lessons | `references/knowledge-management.md` |
 | Living feature inventory — `ROADMAP.md` shape, status legends, bootstrap, update discipline | `references/roadmap.md` |
