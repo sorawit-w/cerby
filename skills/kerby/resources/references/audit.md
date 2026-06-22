@@ -211,6 +211,6 @@ audit --full security     security only, whole repo
 
 A **novel rule** (one not in this table) is assigned a dimension by live classification when the audit walks the corpus; the banner notes that tail is approximate (`inferred` dimensioning). Seed checks are never re-inferred.
 
-The two `--sast` security checks are off unless `--sast` is passed (§ 5, SKILL.md). When the dependency check runs, the banner appends the advisory snapshot's date (`stack.tools.sast.advisoryDb.date`) as a freshness line — observed project state, not a kerby-maintained currency claim.
+The two `--sast` security checks are off unless `--sast` is passed **and `security` is in scope** (§ 5, SKILL.md) — they live in the `security` dimension, so an explicit non-security scope (e.g. `audit --sast quality`) leaves them off and skips provisioning entirely; `--sast` then no-ops. When the dependency check runs, the banner appends the advisory snapshot's date (`stack.tools.sast.advisoryDb.date`) as a freshness line — observed project state, not a kerby-maintained currency claim.
 
 **Unknown / ambiguous dimension** (`audit secrity`, or a word that isn't a dimension) → **don't guess.** List the available dimensions and ask which was meant. This is a disambiguation fallback, not a standing interactive mode — a correct dimension name runs straight through.
