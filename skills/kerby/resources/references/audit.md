@@ -2,7 +2,7 @@
 
 The `audit` sub-command checks an **end-user project's accumulated state** against the *current* kerby corpus and emits a human-readable report. The rules evolve; a repo drifts from them. This is the periodic drift check.
 
-**Contract — the audit is read-only.** It never edits code, never commits, never merges, never opens a PR. It writes one report (and one baseline file) under `.ai/audits/` and stops. Acting on findings is the developer's call.
+**Contract — the audit is read-only on your code and git state.** It never edits source, never commits, never merges, never opens a PR. It writes only generated artifacts under `.ai/` — the report and its baseline under `.ai/audits/`, plus (only when `--sast` triggers provisioning) the tool cache under `.ai/sast/` (`sast-provisioning.md`) — never repo source, then stops. Acting on findings is the developer's call.
 
 **What it is NOT:** not a bug finder (use `/code-review`), not a minimality/bloat review, not a SKILL.md text audit (that's `skill-evaluator`). It checks *conformance to these rules* — nothing else.
 
@@ -122,7 +122,7 @@ Cell hooks (must match the template's class names exactly — `sev-blocker`, nev
 
 Draft the report as Markdown, then write it under `.ai/audits/` (HTML rendering: § Report rendering).
 
-**Git exclusion (recommend, never edit).** Audit reports are point-in-time and local — they don't belong in git. But the audit is **read-only**, so it must not edit `.gitignore` itself — doing so would write a file outside the report dir, falsify the "no source files changed" completion claim, and leave a dirty worktree. If `.ai/audits/` isn't already excluded in the target repo, **surface a one-line recommendation** in the completion message (*"Tip: add `.ai/audits/` to `.gitignore` so reports aren't tracked"*) and let the developer act. The only file the audit writes is the report (and its `.last-audit` baseline) under `.ai/audits/` — nothing else, ever.
+**Git exclusion (recommend, never edit).** Audit reports are point-in-time and local — they don't belong in git. But the audit is **read-only**, so it must not edit `.gitignore` itself — doing so would write a file outside the report dir, falsify the "no source files changed" completion claim, and leave a dirty worktree. If `.ai/audits/` isn't already excluded in the target repo, **surface a one-line recommendation** in the completion message (*"Tip: add `.ai/audits/` — and `.ai/sast/` if you use `--sast` — to `.gitignore` so reports and the tool cache aren't tracked"*) and let the developer act. The only things the audit writes are the report and its `.last-audit` baseline under `.ai/audits/` — plus, **only when `--sast` triggers provisioning**, the generated SAST tool cache under `.ai/sast/` (`sast-provisioning.md`; never repo source). Nothing else, ever — and the same recommend-never-edit `.gitignore` rule covers `.ai/sast/` too.
 
 **File name** — `.ai/audits/audit-<dims>-<mode>-<YYYYMMDD-HHMMSS>.{md,html}`:
 - `<dims>` = `all` (every dimension — the default) or an alphabetically-sorted proper subset joined by `+` (e.g. `security`, `quality+security`). All dimensions collapse to `all` — never enumerate the full set.
@@ -173,7 +173,7 @@ Two audit-specific obligations on top of the shared machinery:
 
 The audit is **incremental by default** — it checks only what changed since the last audit. `--full` opts into a whole-repo sweep.
 
-**Baseline.** On successful completion, write `.ai/audits/.last-audit` with two lines: the `HEAD` SHA at completion, and the dimension scope that ran (e.g. `all`, or `quality+security`). It lives under the git-excluded `.ai/audits/` because the baseline is **local working-copy state**, not shared history.
+**Baseline.** On successful completion, write `.ai/audits/.last-audit` with three lines: the `HEAD` SHA at completion, the dimension scope that ran (e.g. `all`, or `quality+security`), and whether the `--sast` checks ran for that scope (`sast:yes` / `sast:no`). The SAST line is what lets a later `--sast` run tell whether the static-analysis checks have ever covered this baseline. It lives under the git-excluded `.ai/audits/` because the baseline is **local working-copy state**, not shared history.
 
 **Incremental run** (`mode=incr`):
 - File-level checks scope to `git diff --name-only <baseline-sha>..HEAD` ∪ `git status --porcelain` (uncommitted changes), minus the § 3 exclusions.
@@ -182,7 +182,8 @@ The audit is **incremental by default** — it checks only what changed since th
 **Force `--full` (the safety fallback).** A silent empty incremental — reporting "clean" because it checked nothing — is the dangerous failure. Fall back to a full audit, and **say so in the banner** (*"no usable baseline — ran full"*), whenever any of:
 - `.last-audit` is missing (first run),
 - the recorded SHA is unreachable (`git cat-file -e <sha>^{commit}` fails — e.g. rebased away),
-- the requested dimensions are **not a subset** of the last run's scope (a `security`-only baseline can't certify a `quality` audit).
+- the requested dimensions are **not a subset** of the last run's scope (a `security`-only baseline can't certify a `quality` audit),
+- `--sast` is requested but the baseline didn't cover SAST for this scope (`sast:no`, or a pre-`--sast` baseline with no SAST line). The static-analysis + dependency checks have never scanned this baseline, so an incremental delta would silently miss pre-existing findings — fall back to full so the first `--sast` pass sees the whole scope. Banner: *"first `--sast` run for this scope — ran full"*.
 
 `--full` always runs `mode=full` regardless of baseline.
 

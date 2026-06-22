@@ -23,8 +23,10 @@ scripts don't: kerby ships this procedure, not the pins and not the scanners.
 An out-of-tree, **git-ignored** toolchain dir — `.ai/sast/` by default — holds the
 **generated** artifacts only: the venv, the vendored ruleset, the advisory snapshot.
 **Never repo source.** This keeps the audit's read-only-on-the-repo contract and the
-"No source files changed" completion claim true (`audit.md` § 7): provisioning writes
-only under `.ai/sast/`, the scan writes only the report under `.ai/audits/`.
+"No source files changed" completion claim true: provisioning writes only under
+`.ai/sast/`, the scan writes only the report under `.ai/audits/`. `audit.md` § 5 (top
+contract) and § 7 (write rule) explicitly list this cache as the one permitted
+non-source write under `--sast` — so honoring both docs is unambiguous.
 
 The hash-locked **requirements lockfile is a committed, versioned input** — it lives
 **outside** the `.ai/sast/` cache (e.g. `sast/requirements.lock`), because it must be

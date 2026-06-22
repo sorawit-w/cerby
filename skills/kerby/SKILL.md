@@ -313,6 +313,7 @@ Edge cases:
 - **No git repo** → audit the working tree only (file-level checks); skip history-based checks (commit-type, schema-migration) and say so in the banner.
 - **Empty incremental scope, valid baseline** → report *"no changes since last audit"*, not an empty findings list.
 - **`--sast` requested but toolchain/snapshot unresolvable** → SAST + deps reported `not-run` (banner + `notrun` callout); the security section must not read as a clean pass; the audit does not error.
+- **First `--sast` run on a baseline that didn't cover SAST** (`.last-audit` is pre-`--sast` or `sast:no`) → force `--full` (`audit.md` §9); the SAST/dependency checks have no valid incremental baseline, so a delta-only scan would miss pre-existing findings.
 
 ---
 
