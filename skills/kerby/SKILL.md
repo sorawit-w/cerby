@@ -112,7 +112,7 @@ Onboard an **existing repo** into kerby — populate (and refresh) the artifacts
 
 1. Resolve the bundled rule-content root the same way `load` resolves `BOOTSTRAP.md` (Glob `**/skills/kerby/resources/BOOTSTRAP.md`, else `${KERBY_DIR}/resources/BOOTSTRAP.md`, else ask). The workflow file is its sibling at `<install-root>/resources/workflows/adopt-existing.md`.
 2. **Read `resources/workflows/adopt-existing.md` in full** with the `Read` tool, then follow it. It carries the procedure: tiered population by inferability, diff-and-confirm on every write, and per-tier refresh rules that never clobber human-curated content.
-3. The workflow modifies user files — but **only ever behind a per-artifact diff-and-confirm**, exactly like `install`. Never write any artifact silently. Honor the out-of-scope ring-fence in the workflow (no quality gates, no tooling install, no `ROADMAP.md`, no commits/merge, no secret contents).
+3. The workflow modifies user files — but **only ever behind a per-artifact diff-and-confirm**, exactly like `install`. Never write any artifact silently. Honor the out-of-scope ring-fence in the workflow (no quality gates, no tooling install — including SAST provisioning, which is an audit-time `--sast` concern, not onboarding — no `ROADMAP.md`, no commits/merge, no secret contents).
 
 `prepare` is safe to re-run: per the workflow's refresh rules it re-derives only agent-owned content and is a diffs-only near-no-op on an already-onboarded repo.
 
@@ -301,17 +301,18 @@ If `y`:
 
 Run a **static conformance audit** of the current project against the kerby corpus and write a self-contained HTML report. **Read `resources/references/audit.md` in full and follow it** — it holds the untrusted-input doctrine, the auditability classifier, the checks, scoping, and the report contract. The audit is **read-only**: it never edits code, commits, or merges. It is NOT a bug/security review (`/code-review`) and NOT a SKILL.md audit (`skill-evaluator`).
 
-Invocation via the args parameter: `audit [--full] [<dimension> ...]` (dimensions: `security` `quality` `data` `git-hygiene` `docs`; omitted = all).
+Invocation via the args parameter: `audit [--full] [--sast] [<dimension> ...]` (dimensions: `security` `quality` `data` `git-hygiene` `docs`; omitted = all). `--sast` is **opt-in** (off by default): it adds deterministic code-static security checks — semgrep (OWASP/CWE) + a pinned dependency-advisory scan — to the `security` dimension. Default-on is deferred to Phase 2, gated on the byte-identity check in `references/sast-normalization.md`; `--no-sast` is reserved for when that flip lands.
 
 1. **Preflight (`audit.md` § 2).** If the repo root is a skill-authoring surface, do NOT run — say *"This looks like a skill-authoring repo — run `skill-evaluator` instead; `audit` is for real coding projects"* and stop (overridable if the user re-runs). A monorepo with a real app proceeds, excluding `skills/**` + `.claude-plugin/**`.
 2. **Resolve scope.** Default incremental (changes since `.ai/audits/.last-audit`); `--full` sweeps the repo. Positional dimensions filter which checks run; an unknown/ambiguous dimension → list the available ones and ask, don't guess.
-3. **Read the live corpus, classify, check.** Walk `BOOTSTRAP.md` + its references; classify each rule auditable/partial/process-only; run the auditable + partial checks in the two bands (mechanical=`observed`, inference=`inferred`).
+3. **Read the live corpus, classify, check.** Walk `BOOTSTRAP.md` + its references; classify each rule auditable/partial/process-only; run the auditable + partial checks in the two bands (mechanical=`observed`, inference=`inferred`). When `--sast` is passed, also resolve the project's pinned SAST toolchain from `agent-context.yaml` `stack.tools.sast` and provision it if needed (`references/sast-provisioning.md`; network at setup only, into the git-ignored `.ai/sast/` cache — not repo source, so step 5's *No source files changed* still holds). If the toolchain or advisory snapshot can't be provisioned, the SAST/deps checks are **`not-run`** (banner + a `notrun` callout in the security section) — never silent, never folded into the checked count, and the audit still completes.
 4. **Write the report.** `.ai/audits/audit-<dims>-<mode>-<YYYYMMDD-HHMMSS>.md`, render to `.html` (degrade to md-only if no converter), with the three-way coverage banner. If `.ai/audits/` isn't git-excluded, **recommend** the `.gitignore` line in the completion message — do NOT edit `.gitignore` yourself (the audit is read-only).
 5. Confirm: *"**Audit complete.** Checked `<C>`, partial `<P>`, process-only `<Q>`. Report: `<path>`. No source files changed."* (plus the `.gitignore` tip if applicable)
 
 Edge cases:
 - **No git repo** → audit the working tree only (file-level checks); skip history-based checks (commit-type, schema-migration) and say so in the banner.
 - **Empty incremental scope, valid baseline** → report *"no changes since last audit"*, not an empty findings list.
+- **`--sast` requested but toolchain/snapshot unresolvable** → SAST + deps reported `not-run` (banner + `notrun` callout); the security section must not read as a clean pass; the audit does not error.
 
 ---
 

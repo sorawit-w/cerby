@@ -10,14 +10,19 @@
   Styling override surface — the :root below:
     BASE tokens (--bg --ink --ink-muted --accent --border --code-bg --font-*
       --radius --measure): overwrite from DESIGN.md when present; else ship as-is.
-    STATUS tokens (--sev-*): semantic (danger/warning/neutral), NOT brand —
-      keep fixed so a brand palette can't make "blocker" stop reading as danger.
+    STATUS tokens (--sev-*, --notrun-*): semantic (danger/warning/neutral), NOT
+      brand — keep fixed so a brand palette can't make "blocker" stop reading as
+      danger, or a not-run pass read as clean.
       Override only if DESIGN.md explicitly defines danger/warning tokens.
 -->
 <html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- Defense-in-depth behind audit.md § 8 escaping: no script, no external loads,
+     no images. The report is self-contained and JS-free — keep it that way so a
+     missed escape on untrusted repo content can't beacon or execute. -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; img-src 'none'; base-uri 'none'; form-action 'none'">
 <title>{{TITLE}}</title>
 <style>
   :root {
@@ -34,6 +39,7 @@
     --sev-blocker-bg: #f6ddd4; --sev-blocker-ink: #8a2c12;
     --sev-major-bg:   #fbecd2; --sev-major-ink:   #92400e;
     --sev-minor-bg:   #ece9e3; --sev-minor-ink:   #57534e;
+    --notrun-bg:      #fdf6e3; --notrun-ink:      #92400e;  /* not-run: amber, must NOT read as a clean pass */
   }
   * { box-sizing: border-box; }
   html { -webkit-text-size-adjust: 100%; }
@@ -73,6 +79,7 @@
   .conf-inferred { color: var(--ink-muted); font-style: italic; }
 
   .none { color: var(--ink-muted); font-style: italic; padding: 0.4em 0; }
+  .notrun { display: block; background: var(--notrun-bg); color: var(--notrun-ink); border-radius: var(--radius); padding: 0.5em 0.75em; font-size: 0.9rem; margin: 0.4em 0; }
   .doc-footer { margin-top: 2.5rem; border-top: 1px solid var(--border); padding-top: 1.2rem; font-size: 0.9rem; color: var(--ink-muted); }
   .doc-footer ul { margin: 0.3em 0 1em; padding-left: 1.3em; }
   .doc-footer li { margin: 0.2em 0; }

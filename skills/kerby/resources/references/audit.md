@@ -58,6 +58,10 @@ Deterministic. **Reuse existing tooling; never reimplement it.**
 | **Commit-type discipline** | `git log --format=%s <range>`; flag any subject whose type prefix isn't one of `feat fix chore docs refactor test perf build ci` (BOOTSTRAP §4 Commit Discipline). | BOOTSTRAP §4 |
 | **Schema change without migration** | Per commit, `git show --name-only`; if a model/schema file changed but no migration path (BOOTSTRAP §3 migration globs) changed in the same commit, flag it. | `working-patterns.md` § Schema-Migration Coupling |
 | **Dead code** | Shell out to **the project's own** linter/analyzer (resolve from `agent-context.yaml` / project config) — never a bundled one (methodology travels, scripts don't). Unused imports, unreachable branches, orphaned files. Honor the **platform-code caveat**: exported symbols in libs/SDKs may have external callers — treat unused *exports* as live unless verified. **If no linter is resolvable, mark this check `not-run` and say so in the coverage banner — never silently drop it** (a dropped check counted as "checked" is the silent-cap failure the banner exists to prevent). | `working-patterns.md` § Code Standards |
+| **SAST (semgrep)** — `--sast` only | Resolve the project's **pinned** semgrep + ruleset from `agent-context.yaml` `stack.tools.sast` (provision per `sast-provisioning.md`); run it **offline** over the audit scope; **normalize the SARIF per `sast-normalization.md` before emitting** — pinning alone isn't byte-stable. Map `ruleId` + CWE/OWASP tags → finding; bump severity on BOOTSTRAP §3 high-stakes paths by pointer. **No pinned toolchain resolvable → `not-run` in the banner** — never silent, never a live install. | `validation.md` § Security Lens + `guardrails.md` § Security Awareness |
+| **Vulnerable dependencies** — `--sast` only | Scan declared deps against the **pinned advisory snapshot** (`stack.tools.sast.advisoryDb`) — **never a live query**. Map advisories → finding `[A06 · CWE-1104]`. **Snapshot present → run; absent → `not-run` in the banner.** | `guardrails.md` § Security Awareness (dependency review) |
+
+**The two SAST rows are opt-in (`--sast`), off by default** (§ 10, SKILL.md). not-run reuses the dead-code mechanism exactly: an unprovisioned tool or missing snapshot folds into the banner's `Not run:` slot (§ 7) **and** renders a `<p class="notrun">` in the security section (template) — never the checked count, never a clean ✓. `observed` here means *tool-reported, reproducible — not confirmed* (§ 6). Under incremental scope (§ 9) semgrep runs over the **changed files whole** (not diff hunks); dataflow into *unchanged* files is a declared blind spot — `--full` is the whole-repo sweep.
 
 ### Inference band — `confidence: inferred`
 
@@ -108,7 +112,7 @@ Cell hooks (must match the template's class names exactly — `sev-blocker`, nev
 
 **Severity** = the rule's own stakes, **bumped one level** when the finding sits on a **BOOTSTRAP §3 high-stakes path** (auth / payments / migrations / infra / CI / traffic-shaping) — reference that list by pointer, do not recopy it. So a hardcoded secret under `auth/` is always `blocker`; a missing upgrade-trigger comment in a util is `minor`.
 
-**Confidence** here is per-*finding* (`observed` = mechanical match; `inferred` = heuristic) — distinct from the knowledge-base entry `confidence` in `knowledge-management.md`. Don't conflate them.
+**Confidence** here is per-*finding* (`observed` = mechanical match; `inferred` = heuristic) — distinct from the knowledge-base entry `confidence` in `knowledge-management.md`. Don't conflate them. For tool-sourced rows (SAST, vulnerable deps), `observed` means **the tool reported this — reproducible, not a confirmed vulnerability**; the Fix cell stays the model's `inferred` advice. A semgrep result lacking an OWASP/CWE tag is emitted under the Rule name **`uncategorized`**, never dropped.
 
 (Sample values above — `acme-checkout` / `src/config/…` — are placeholders only. Never an employer, customer, or vendor name: this is a public repo.)
 
@@ -160,6 +164,7 @@ Two audit-specific obligations on top of the shared machinery:
   1. **HTML-entity-escape** the string — `&`→`&amp;`, `<`→`&lt;`, `>`→`&gt;`, `"`→`&quot;`. This kills raw `<script>` / `<img>` / `<iframe>`.
   2. **Wrap it in an inline code span / fenced block** so Markdown-active syntax (`![]()`, `[]()`, tables, pipes) renders literally in both the `.md` and the HTML. **Choose a backtick run (or fence length) longer than the longest backtick run inside the content** — otherwise the content closes the span early and breaks out (same closing-delimiter-spoofing class as the SessionStart provenance framing in `hooks/session-start-context.sh`). Never interpolate an untrusted string as bare body text.
 - **MUST self-check before writing the `.html`.** After conversion, confirm no untrusted-derived region produced live HTML: the rendered HTML must contain **no** `<script`, `<img`, `<iframe`, `javascript:`, or `on*=` attribute that originated from interpolated repo content. If the check cannot be performed or fails, **write the `.md` only** and say so — never ship an `.html` you could not verify. The `.md` is canonical; the `.html` is the vector, so the gate is on the `.html`.
+- **SARIF excerpts are untrusted repo content (§1), no exception.** semgrep messages, code snippets, and paths get the same escape + `<code>`-wrap as any other cell (§ 6) and pass the same pre-write self-check above. Defense-in-depth: `audit-report.html.template` ships a restrictive CSP `<meta>` (no script, no external loads, no images) behind the escaping, and carries no runtime JS — so even a missed escape can't beacon or execute. Don't add JS to that template.
 - **Degrade when no converter is present.** Try `pandoc` → `markdown-it` → Python `markdown`. If none is available, **write the `.md` only** and say so in one line: *"No Markdown converter found; wrote `audit-….md` only — install pandoc or run html-export later."* Never hand-author the HTML tag-by-tag (`html-export.md` forbids it). The audit is **done when the `.md` exists** — HTML never blocks completion.
 
 ---
@@ -198,12 +203,14 @@ audit --full security     security only, whole repo
 
 | Dimension | Checks |
 |---|---|
-| `security` | committed secrets |
+| `security` | committed secrets; SAST (semgrep) — `--sast`; vulnerable dependencies — `--sast` |
 | `quality` | dead code, abstraction-for-one-use, shortcut-without-upgrade-trigger, hollow/stub tests |
 | `data` | schema change without migration |
 | `git-hygiene` | commit-type discipline, protected-branch commits, `.ai/memory.log` cadence |
 | `docs` | docs-not-updated-with-behavior |
 
 A **novel rule** (one not in this table) is assigned a dimension by live classification when the audit walks the corpus; the banner notes that tail is approximate (`inferred` dimensioning). Seed checks are never re-inferred.
+
+The two `--sast` security checks are off unless `--sast` is passed (§ 5, SKILL.md). When the dependency check runs, the banner appends the advisory snapshot's date (`stack.tools.sast.advisoryDb.date`) as a freshness line — observed project state, not a kerby-maintained currency claim.
 
 **Unknown / ambiguous dimension** (`audit secrity`, or a word that isn't a dimension) → **don't guess.** List the available dimensions and ask which was meant. This is a disambiguation fallback, not a standing interactive mode — a correct dimension name runs straight through.

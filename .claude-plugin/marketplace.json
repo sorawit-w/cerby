@@ -10,7 +10,7 @@
       "name": "kerby",
       "source": "./",
       "description": "kerby — the gate guardian for agentic coding. A loadable rule-corpus plus opt-in guardrail hooks that govern how an AI agent does coding work: clarity over cleverness, safety over speed, never leave the repo broken, and nothing unproven passes the gate. Load it into a session, reload after compaction, install per-project hooks, prepare an existing repo, or audit a repo's conformance to the rules.",
-      "version": "5.1.0",
+      "version": "5.2.0",
       "author": {
         "name": "sorawit-w"
       },

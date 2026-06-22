@@ -3,6 +3,51 @@
 All notable changes to `kerby` are documented here. Format follows
 [Keep a Changelog](https://keepachangelog.com/); versioning is semver.
 
+## [5.2.0] — 2026-06-21
+
+Added an **opt-in deterministic code-static security layer** to `kerby audit`.
+`kerby audit --sast` runs the project's **pinned** semgrep (OWASP/CWE) and a **pinned,
+offline dependency-advisory snapshot** alongside the existing gitleaks secrets check,
+emitting findings through the existing report renderer. It is **off by default**;
+default-on is deferred to a later phase behind a byte-identity gate. Findings are
+**`observed` = tool-reported, not confirmed** — no artifact may claim the code is secure
+or "OWASP-compliant" (same honesty stance as 5.1.0).
+
+### Added
+- **`--sast` flag** on the `audit` sub-command ([`SKILL.md`](skills/kerby/SKILL.md),
+  [`audit.md`](skills/kerby/resources/references/audit.md) §5/§10): two new mechanical-band
+  checks — **SAST (semgrep)** and **vulnerable dependencies** `[A06 · CWE-1104]` — added to
+  the `security` dimension, both gated on `--sast`.
+- **[`references/sast-provisioning.md`](skills/kerby/resources/references/sast-provisioning.md)** —
+  agent-driven, on-demand, pinned toolchain setup (hash-locked requirements + pinned Python;
+  no Docker). All network at setup, none at scan; installs to the git-ignored `.ai/sast/`
+  cache, never repo source. Not part of `prepare`.
+- **[`references/sast-normalization.md`](skills/kerby/resources/references/sast-normalization.md)** —
+  the SARIF→byte-stable normalization pass (relativize paths, strip volatile fields, stable
+  total-order sort, canonical serialization) + the Phase-2 default-on determinism gate
+  (manual checklist, not a runner).
+- **`stack.tools.sast`** in [`agent-context.schema.yaml`](skills/kerby/resources/agent-context.schema.yaml)
+  (`SastTools` def) + a commented template block — project-owned pins (semgrep + ruleset,
+  Python, hash-locked requirements, advisory snapshot). kerby resolves them; drift is the
+  project's to manage, surfaced as a banner freshness line.
+- **CSP + not-run visual state** in the audit HTML template — a restrictive
+  `Content-Security-Policy` meta (no script, no external loads, no images) behind the §8
+  escaping, and an amber `notrun` style so a `--sast`-requested-but-unprovisioned security
+  section can't read as a clean pass.
+- **Tier-2 registry row** ([`external-resources.md`](skills/kerby/resources/references/external-resources.md))
+  for the opt-in agentic security dataflow pass — developer-run, never invoked by `audit`.
+
+### Notes
+- **Deterministic / read-only.** Pinned tools + offline scan + the normalization pass =
+  `observed`, byte-stable findings; the scan reads code but writes only the report under
+  `.ai/audits/`. Provisioning writes only to the `.ai/sast/` cache — "No source files
+  changed" still holds.
+- **Degrade, never hard-fail.** No pinned toolchain / advisory snapshot resolvable →
+  `not-run` in the banner — never an error, never a clean pass.
+- **Deferred:** default-on (Phase-2, behind the determinism gate), the non-deterministic
+  `--review` adjudication pass, and the egress-locked container variant. **Out of scope:**
+  CodeQL, compliance certification, bundling scanners.
+
 ## [5.1.0] — 2026-06-21
 
 Mapped the **Security Lens** ([`validation.md`](skills/kerby/resources/references/validation.md)

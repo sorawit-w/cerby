@@ -134,7 +134,7 @@ Complete before declaring done:
 
 `prepare` populates context. It does **not**:
 - run quality gates (build/lint/test) — onboarding reads, it doesn't verify the build;
-- install linters/formatters or any tooling;
+- install linters/formatters or any tooling — including the **SAST toolchain**: provisioning semgrep / the advisory snapshot is an audit-time `--sast` concern (`references/sast-provisioning.md`), never part of onboarding;
 - scaffold vendor-adapter dirs (`ports/`/`adapters/`/`composition.ts`) — that's `new-project.md`;
 - author `DESIGN.md` — design-token authority is a separate concern; tokens are only sometimes code-inferable and a wrong contract is worse than none. If a UI project lacks one, mention it; don't generate it. See `references/design-md.md`;
 - create `ROADMAP.md` — only on explicit user request;

@@ -27,6 +27,21 @@ runtime:
 stack:
   frameworks: {}
   tools: {}
+  # Expand `tools` like this to adopt `kerby audit --sast` (opt-in). Pins are
+  # project-owned — kerby resolves them, never tracks upstream. All network at
+  # setup, none at scan. See references/sast-provisioning.md.
+  #   tools:
+  #     sast:
+  #       enabled: true
+  #       python: "3.12.7"                            # pinned interpreter
+  #       requirements: ".ai/sast/requirements.lock"  # hash-locked (pip --require-hashes)
+  #       semgrep:
+  #         version: "1.86.0"
+  #         ruleset: "p/owasp-top-ten@<rev>"          # pinned ruleset (OWASP/CWE)
+  #       advisoryDb:
+  #         snapshot: "osv-2026-06-15"
+  #         date: "2026-06-15"                         # -> coverage-banner freshness line
+  #       # gitleaks already exists (pre-commit-check.sh) — referenced, never re-pinned
   aiProviders: []
 
 entryPoints: []        # e.g. ["src/main.ts"]

@@ -26,11 +26,36 @@ $defs:
     required: [primary, language]
     additionalProperties: true
 
+  SastTools:
+    type: object
+    description: "Project-owned pinned SAST toolchain for `kerby audit --sast` (opt-in; see references/sast-provisioning.md). kerby resolves these pins, never tracks them upstream."
+    properties:
+      enabled: { type: boolean }
+      python: { type: string }            # pinned interpreter, e.g. "3.12.7"
+      requirements: { type: string }      # hash-locked lockfile path (pip --require-hashes)
+      semgrep:
+        type: object
+        properties:
+          version: { type: string }
+          ruleset: { type: string }       # pinned ruleset, e.g. "p/owasp-top-ten@<rev>"
+        additionalProperties: true
+      advisoryDb:
+        type: object
+        properties:
+          snapshot: { type: string }
+          date: { type: string }          # source for the coverage-banner freshness line
+        additionalProperties: true
+    additionalProperties: true
+
   Stack:
     type: object
     properties:
       frameworks: { type: object, additionalProperties: true }
-      tools: { type: object, additionalProperties: true }
+      tools:
+        type: object
+        properties:
+          sast: { $ref: "#/$defs/SastTools" }
+        additionalProperties: true
       aiProviders:
         type: array
         items:

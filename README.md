@@ -106,9 +106,11 @@ These are not decoration. They are what every verdict comes back to:
 
 ## Status
 
-Current release: `5.1.0` — maps the Security Lens to the OWASP Top 10 (2021) + CWE,
-adds SSRF coverage, and keeps the lens conditional and `[behavioral]` (it targets the
-standards best-effort; it does not certify "OWASP-compliant"). See [CHANGELOG.md](CHANGELOG.md).
+Current release: `5.2.0` — adds an opt-in deterministic code-static security layer to
+`kerby audit` (`--sast`: pinned semgrep + a pinned offline dependency-advisory snapshot
+alongside gitleaks), emitting `observed` (tool-reported, not confirmed) findings. Off by
+default; degrades to `not-run` when unprovisioned; never certifies "OWASP-compliant".
+See [CHANGELOG.md](CHANGELOG.md).
 
 **Opinionated — read first.** These are one author's rules. Read
 [`skills/kerby/resources/BOOTSTRAP.md`](skills/kerby/resources/BOOTSTRAP.md) end-to-end
