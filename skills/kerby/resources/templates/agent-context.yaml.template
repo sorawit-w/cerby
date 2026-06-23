@@ -65,6 +65,10 @@ ai:
   memoryPolicy:
     logTo: .ai/memory.log
     maxEntries: 200
+  # Grade (1–10) at/above which a written plan is required before code (default 4 = beyond
+  # trivial). Also gates routing: quick-task is reachable only when grade < this value.
+  # Lower = more coverage but risks plan-fatigue (a gate that always fires gets skimmed past).
+  planThreshold: 4
 
 # Project knowledge base (.ai/knowledge/) — managed by the knowledge-bootstrap
 # (SessionStart) and knowledge-reindex (post-commit) hooks. Set enabled: false

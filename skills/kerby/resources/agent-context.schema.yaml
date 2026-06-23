@@ -81,6 +81,7 @@ $defs:
       memoryPolicy:
         type: object
         additionalProperties: true
+      planThreshold: { type: integer, minimum: 1, maximum: 10 }
     additionalProperties: true
 
   KnowledgeSection:
