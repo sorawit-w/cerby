@@ -58,7 +58,7 @@ complexity: <N> (trigger: <≤8-word reason>) → route: <new-project | adopt-ex
 
 **Default up** when the task sits between two bands. The emitted grade is what makes a skipped plan catchable — a silent grade defeats the § 4 Plan Gate.
 
-Pick the workflow by **task type** (§ 3 routing table — a bug fix routes to `bugfix.md`, not `feature.md`). The grade governs only the `quick-task`-vs-`feature` split below and the § 4 Plan Gate, which applies to whichever workflow you choose.
+Pick the workflow by **task type** (§ 3 routing table — a bug fix routes to `bugfix.md`, not `feature.md`). The grade governs only the **quick-task-vs-task-type-workflow** split below (quick-task when grade < threshold and the fit check holds, otherwise the § 3 task-type workflow — `bugfix.md` for a bug fix, else `feature.md`) and the § 4 Plan Gate, which applies to whichever workflow you choose.
 
 - `quick-task.md` is selectable **only when `grade < plan_threshold`** (`ai.planThreshold` in `agent-context.yaml`; if the file or key is absent, use the default **4** — never block on the missing knob) **AND the change passes the quick-task fit check** (no new logic/refactor, ≤~50 LOC, no schema/contract changes — see `workflows/quick-task.md`). If either fails, route to the **task-type workflow** (`bugfix.md` for a bug fix, otherwise `feature.md`) — never drop a bug fix's reproduce/diagnose/failing-test path just because it outgrew quick-task. The grade is a ceiling; the fit check is an independent risk guard — both must hold.
 - The § 3 high-stakes path override still forces `feature.md` regardless of grade.

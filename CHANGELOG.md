@@ -62,7 +62,9 @@ longer name "step 2 (Clarify)" — they point to the target workflow's own step 
 in `bugfix.md`). Finally, `planThreshold` is capped at **7** (schema `maximum`, template
 comment, and the §4 rule): approval is fixed at grade ≥ 7, so a higher threshold would make
 grade-7 work require approval with no plan to review — 7 is the point where plan and approval
-coincide.
+coincide. And the §2.5 summary line now frames the grade decision as
+quick-task-vs-**task-type-workflow** (not quick-task-vs-feature), matching the task-type
+fallback so an outgrown quick bugfix isn't described as routing to `feature.md`.
 
 ## [5.2.0] — 2026-06-21
 
