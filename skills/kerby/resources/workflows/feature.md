@@ -192,7 +192,7 @@ Complete ALL of these before declaring done:
    3. [Edge cases to test]
    4. [Environment setup if needed]
    ```
-7. **Realized Outcomes captured (grade ≥ `plan_threshold`)** — distinct from "How to Verify" above (that's instructions for the human; this is *your* check against the § 3 prediction). After implementing:
+7. **Realized Outcomes captured (grade ≥ `plan_threshold`)** — distinct from "How to Verify" above (that's instructions for the human; this is *your* check against the § 3 prediction). *Skip this step only when the plan was waived by a logged user opt-out (`BOOTSTRAP.md` § 2.5) — there is no Expected Outcome to compare against; standard Verification (§ 6) still applies.* After implementing:
    1. Capture the **actual** result from a real run — or a dry-run transcript where no runnable surface exists — and place it next to the § 3 Expected Outcome. Evidence is an object (screenshot path / captured JSON / CLI dump / diff), **not** prose.
    2. Emit `outcome: match | mismatch`.
    3. On `mismatch`, classify the cause and route — **only one branch changes code**:

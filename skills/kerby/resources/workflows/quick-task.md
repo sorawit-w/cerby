@@ -1,6 +1,6 @@
 # Quick Task Workflow
 
-For simple tasks — single-file edits, config changes, documentation updates, or fixes with obvious root cause (complexity 1–3).
+For simple tasks — single-file edits, config changes, documentation updates, or fixes with obvious root cause (complexity below `plan_threshold` — default 4, i.e. the low band).
 
 **Branching:** quick-task stays in-place. Use a normal `git checkout -b` — worktree overhead is not justified for changes this small. Worktree default applies only to `workflows/feature.md` and `workflows/bugfix.md`. (If the task turns out to be more complex than expected, escalate to feature.md and create a worktree at that point.)
 
@@ -17,6 +17,8 @@ The quick-task path is appropriate only when ALL of these hold. If even one fail
 - **Change is strings, copy, comments, config values, data, or formatting** — not new logic, not refactoring, not behavior change
 
 **Why this is hard-floored, not advisory:** quick-task skips overhead because the risk surface is bounded. Violating any criterion means the risk surface is no longer bounded — at that point the savings are illusory and the discipline of `feature.md` is the cheaper path overall.
+
+**Grade ceiling vs. risk guard — two independent axes.** The complexity ceiling tracks `plan_threshold` (raising the knob never lowers the bar here); the criteria above are independent risk guards. A change that introduces logic, refactors, exceeds the LOC budget, or touches schema/contracts escalates to `feature.md` *even when its grade is below the threshold*. Both the grade ceiling and the fit check must hold.
 
 **State your fit check before starting**, in 2–4 lines:
 

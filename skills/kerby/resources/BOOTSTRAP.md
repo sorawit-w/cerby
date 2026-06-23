@@ -58,9 +58,9 @@ complexity: <N> (trigger: <≤8-word reason>) → route: <quick-task | feature>
 
 **Default up** when the task sits between two bands. The emitted grade is what makes a skipped plan catchable — a silent grade defeats the § 4 Plan Gate.
 
-- `quick-task.md` is selectable **only when `grade < plan_threshold`** (`ai.planThreshold` in `agent-context.yaml`, default 4). At or above it, route to `feature.md`.
+- `quick-task.md` is selectable **only when `grade < plan_threshold`** (`ai.planThreshold` in `agent-context.yaml`, default 4) **AND the change passes the quick-task fit check** (no new logic/refactor, ≤~50 LOC, no schema/contract changes — see `workflows/quick-task.md`). If either fails, route to `feature.md`. The grade is a ceiling; the fit check is an independent risk guard — both must hold.
 - The § 3 high-stakes path override still forces `feature.md` regardless of grade.
-- **User opt-out** — only an *explicit instruction to skip planning* counts: `skip plan`, `skip the plan`, `no plan`, `just do it`. A bare `quick` / `quick one` is tone, not an opt-out — do not treat it as one (it collides with casual openers like "quick question"). On a real opt-out, emit `plan: skipped (user opt-out: "<quoted phrase>")` and append the same line to `.ai/memory.log`. The grade line is still emitted.
+- **User opt-out** — only an *explicit instruction to skip planning* counts: `skip plan`, `skip the plan`, `no plan`, `just do it`. A bare `quick` / `quick one` is tone, not an opt-out — do not treat it as one (it collides with casual openers like "quick question"). On a real opt-out, emit `plan: skipped (user opt-out: "<quoted phrase>")` and append the same line to `.ai/memory.log`. The grade line is still emitted. Opt-out waives the plan — including its Expected Outcomes, and therefore the § 7 Realized Outcomes comparison (no prediction to compare against). It does **not** waive the § 4 Verification rule or quality gates: opt-out skips planning, never verification.
 </grade_before_route>
 
 <route_workflow>
