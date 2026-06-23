@@ -28,6 +28,12 @@ silently skipping the plan) — only explicit skip-planning instructions count. 
 high-stakes path override now states that routing is decided by *which file* an edit
 lands in, not by whether the changed lines look security-relevant.
 
+A Codex PR review closed two consistency seams in the unified model: quick-task
+eligibility now requires *both* `grade < plan_threshold` *and* the quick-task fit check
+(so raising the knob can't route a moderate-logic task into a workflow that rejects it),
+and a user opt-out now explicitly waives the Expected/Realized Outcomes comparison while
+leaving the Verification rule and quality gates intact.
+
 ## [5.2.0] — 2026-06-21
 
 Added an **opt-in deterministic code-static security layer** to `kerby audit`.
