@@ -44,7 +44,9 @@ correctly scoped to §3-routed coding workflows in a loaded session — the stan
 `prepare`/`audit` sub-commands (which never run the §2.5 grading step) are governed by
 their own diff-and-confirm / report procedures, not the gate; and (7) when a task outgrows
 quick-task it now falls back to the task-type workflow (`bugfix.md` for a bug fix), not
-unconditionally to `feature.md`, preserving the bugfix reproduce/diagnose/test path.
+unconditionally to `feature.md`, preserving the bugfix reproduce/diagnose/test path —
+including `quick-task.md`'s own four internal escalation points, now aligned to the same
+task-type rule.
 
 ## [5.2.0] — 2026-06-21
 

@@ -7,7 +7,7 @@ For simple tasks — single-file edits, config changes, documentation updates, o
 <fit_check>
 ## Fit Check (before you start)
 
-The quick-task path is appropriate only when ALL of these hold. If even one fails, switch to `workflows/feature.md` from step 2 (Clarify) — no exceptions.
+The quick-task path is appropriate only when ALL of these hold. If even one fails, switch to the task-type workflow (`bugfix.md` for a bug fix, else `workflows/feature.md`) from step 2 (Clarify) — no exceptions.
 
 - **No new files** — you're editing existing files only, not adding modules
 - **No test logic changes** — tests may *run* during checks, but you're not modifying assertions, test scaffolding, or fixtures
@@ -18,7 +18,7 @@ The quick-task path is appropriate only when ALL of these hold. If even one fail
 
 **Why this is hard-floored, not advisory:** quick-task skips overhead because the risk surface is bounded. Violating any criterion means the risk surface is no longer bounded — at that point the savings are illusory and the discipline of `feature.md` is the cheaper path overall.
 
-**Grade ceiling vs. risk guard — two independent axes.** The complexity ceiling tracks `plan_threshold` (raising the knob never lowers the bar here); the criteria above are independent risk guards. A change that introduces logic, refactors, exceeds the LOC budget, or touches schema/contracts escalates to `feature.md` *even when its grade is below the threshold*. Both the grade ceiling and the fit check must hold.
+**Grade ceiling vs. risk guard — two independent axes.** The complexity ceiling tracks `plan_threshold` (raising the knob never lowers the bar here); the criteria above are independent risk guards. A change that introduces logic, refactors, exceeds the LOC budget, or touches schema/contracts escalates to the task-type workflow (`bugfix.md` / `feature.md`) *even when its grade is below the threshold*. Both the grade ceiling and the fit check must hold.
 
 **State your fit check before starting**, in 2–4 lines:
 
@@ -44,7 +44,7 @@ If you can't state it cleanly, the task doesn't fit. Switch workflows.
    ```bash
    git diff --stat
    ```
-   Compare actual diff to your declared fit check. If ANY of these now hold, STOP and escalate to `workflows/feature.md`:
+   Compare actual diff to your declared fit check. If ANY of these now hold, STOP and escalate to the task-type workflow (`bugfix.md` for a bug fix, else `workflows/feature.md`):
    - Diff exceeds ~50 LOC across the change
    - Diff introduces a new file you didn't declare
    - Diff touches a test file, schema/migration file, contract/type file, or a high-stakes path (per BOOTSTRAP.md §3)
@@ -75,7 +75,7 @@ If you can't state it cleanly, the task doesn't fit. Switch workflows.
 <escalate>
 ## If It's Not Simple
 
-If the task turns out to be more complex than expected (touching multiple files, unexpected failures, unclear requirements), switch to the full feature workflow:
+If the task turns out to be more complex than expected (touching multiple files, unexpected failures, unclear requirements), switch to the full workflow for the task type — **`bugfix.md` for a bug fix** (it keeps the reproduce → diagnose → failing-test path), otherwise **`feature.md`**:
 
-Read `workflows/feature.md` and start from step 2 (Clarify).
+Read that workflow and start from step 2 (Clarify).
 </escalate>
