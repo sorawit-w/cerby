@@ -39,7 +39,12 @@ Plan Gate's inline-plan path no longer stops grade 4–6 work — the approval S
 to grade ≥ 7, matching the ladder; and (5) the Realized Outcomes check is now a §4 Plan
 Gate hard rule (pointing to feature.md §7 as the canonical procedure) so it applies to
 *every* workflow at grade ≥ threshold — a grade-4+ bug fix or setup task can no longer
-finish without the match/mismatch classification.
+finish without the match/mismatch classification; (6) that Realized-Outcomes rule is now
+correctly scoped to §3-routed coding workflows in a loaded session — the standalone
+`prepare`/`audit` sub-commands (which never run the §2.5 grading step) are governed by
+their own diff-and-confirm / report procedures, not the gate; and (7) when a task outgrows
+quick-task it now falls back to the task-type workflow (`bugfix.md` for a bug fix), not
+unconditionally to `feature.md`, preserving the bugfix reproduce/diagnose/test path.
 
 ## [5.2.0] — 2026-06-21
 
