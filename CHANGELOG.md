@@ -22,6 +22,12 @@ existing loop + circuit breaker), **prediction-wrong** (update the prediction + 
 `.ai/memory.log`), or **ambiguous** (STOP for human adjudication). The Iron Law now
 forbids editing realized evidence to match a prediction and judges on material intent.
 
+Tightened by an in-session `skill-evaluator` pass: the opt-out trigger set drops the
+bare word `quick` (it collided with casual openers like "quick question" and risked
+silently skipping the plan) — only explicit skip-planning instructions count. The §3
+high-stakes path override now states that routing is decided by *which file* an edit
+lands in, not by whether the changed lines look security-relevant.
+
 ## [5.2.0] — 2026-06-21
 
 Added an **opt-in deterministic code-static security layer** to `kerby audit`.
