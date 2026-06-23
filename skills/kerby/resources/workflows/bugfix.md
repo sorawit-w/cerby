@@ -101,10 +101,11 @@ Complete ALL of these before declaring done:
 3. **Memory log updated** — what the bug was, what caused it, how you fixed it
 4. **STATUS.md updated**
 5. **Manual verification instructions provided** — emit the **How to Verify** block per `BOOTSTRAP.md` § 4 (Manual Verification Instructions). For a bug fix, include: steps to reproduce the original bug (should no longer occur), steps confirming the fix, and related areas to spot-check for regressions.
-6. **Project knowledge artifacts** — propose additions before writing; skip if nothing applies:
+6. **Realized Outcomes captured (grade ≥ `plan_threshold`)** — per `BOOTSTRAP.md` § 4 / `workflows/feature.md` § 7: place the actual run result next to the § 3 Expected Outcome, emit `outcome: match | mismatch`, and on mismatch route code-wrong (fix via this workflow's loop, bounded by the circuit breaker) / prediction-wrong (update + log) / ambiguous (STOP). Skip only when the plan was waived by a logged user opt-out (§ 2.5).
+7. **Project knowledge artifacts** — propose additions before writing; skip if nothing applies:
    - **`.ai/knowledge/` lesson** if this bug reveals an operational lesson worth keeping
    - **`CONTEXT.md` update** if a new domain term was introduced or renamed. See `references/domain-glossary.md`.
-7. **Branch finalization — pick one of four options** (same as feature workflow):
+8. **Branch finalization — pick one of four options** (same as feature workflow):
    - **Open PR** (default) — push branch; open PR; keep worktree until PR is merged
    - **Merge locally** (solo project / approved hotfix) — merge, then `git worktree remove .worktrees/<name>`
    - **Preserve branch** (more work expected) — keep worktree; note reason in `.ai/memory.log`
@@ -112,7 +113,7 @@ Complete ALL of these before declaring done:
    
    If using an in-place branch (npm fallback), only options 1 or 2 apply.
 
-8. **Do NOT merge to a protected branch without explicit user instruction.**
+9. **Do NOT merge to a protected branch without explicit user instruction.**
 
 Full worktree lifecycle details: `references/git-worktrees.md`
 </finish>

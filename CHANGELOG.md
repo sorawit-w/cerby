@@ -64,7 +64,11 @@ comment, and the §4 rule): approval is fixed at grade ≥ 7, so a higher thresh
 grade-7 work require approval with no plan to review — 7 is the point where plan and approval
 coincide. And the §2.5 summary line now frames the grade decision as
 quick-task-vs-**task-type-workflow** (not quick-task-vs-feature), matching the task-type
-fallback so an outgrown quick bugfix isn't described as routing to `feature.md`.
+fallback so an outgrown quick bugfix isn't described as routing to `feature.md`. A
+consolidated self-audit then closed the last propagation gap: `bugfix.md` and
+`new-project.md` finish steps now explicitly list the Realized Outcomes obligation (pointer
+to feature.md §7), matching how Manual Verification is surfaced — the §4 hard rule no longer
+relies on the agent cross-referencing it from a workflow that didn't mention it.
 
 ## [5.2.0] — 2026-06-21
 

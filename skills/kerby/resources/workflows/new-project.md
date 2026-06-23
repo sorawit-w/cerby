@@ -91,6 +91,7 @@ Complete ALL of these before declaring done:
 6. **`ROADMAP.md` populated** from requirements — not just the empty bootstrap header. Active items reflect the planned scope; phase grouping if multi-phase.
 7. **Vendor-adapter structure scaffolded** — `ports/`, `adapters/`, and `composition.ts` exist under the source root, even if empty (adapters added per vendor on demand).
 8. **Manual verification instructions provided** — emit the **How to Verify** block per `BOOTSTRAP.md` § 4 (Manual Verification Instructions). For a new project, include: how to install dependencies, how to run the dev server, and what to expect in the browser/terminal.
-9. **DEVELOPER_TODO.md created** if human actions are needed
-10. **Do NOT merge** — leave for human review
+9. **Realized Outcomes captured (grade ≥ `plan_threshold`)** — per `BOOTSTRAP.md` § 4 / `workflows/feature.md` § 7: place the actual run result (e.g. dev server up, home route renders) next to the § 3 Expected Outcome, emit `outcome: match | mismatch`, and route any mismatch (code-wrong / prediction-wrong / ambiguous). Skip only on a logged user opt-out (§ 2.5).
+10. **DEVELOPER_TODO.md created** if human actions are needed
+11. **Do NOT merge** — leave for human review
 </finish>
