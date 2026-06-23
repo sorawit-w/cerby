@@ -53,10 +53,12 @@ Read these files now:
 Before choosing a workflow, grade the task on the canonical ladder (`workflows/feature.md` § 3) and emit one line — **always, even for one-liners**:
 
 ```
-complexity: <N> (trigger: <≤8-word reason>) → route: <quick-task | feature>
+complexity: <N> (trigger: <≤8-word reason>) → route: <new-project | adopt-existing | feature | bugfix | quick-task>
 ```
 
 **Default up** when the task sits between two bands. The emitted grade is what makes a skipped plan catchable — a silent grade defeats the § 4 Plan Gate.
+
+Pick the workflow by **task type** (§ 3 routing table — a bug fix routes to `bugfix.md`, not `feature.md`). The grade governs only the `quick-task`-vs-`feature` split below and the § 4 Plan Gate, which applies to whichever workflow you choose.
 
 - `quick-task.md` is selectable **only when `grade < plan_threshold`** (`ai.planThreshold` in `agent-context.yaml`, default 4) **AND the change passes the quick-task fit check** (no new logic/refactor, ≤~50 LOC, no schema/contract changes — see `workflows/quick-task.md`). If either fails, route to `feature.md`. The grade is a ceiling; the fit check is an independent risk guard — both must hold.
 - The § 3 high-stakes path override still forces `feature.md` regardless of grade.
@@ -105,8 +107,9 @@ These rules apply to ALL tasks regardless of workflow. Violating any of these is
 **No code before a plan once the grade clears the bar.** The grade is emitted at § 2.5; this rule is what it gates.
 
 - Grade ≥ `plan_threshold` (`ai.planThreshold`) → produce a written plan **with an Expected Outcomes block** (`workflows/feature.md` § 3) before any code.
-- Grade ≥ 7 → **STOP and get user approval** before implementing.
-- Enter your platform's native plan mode if it exposes one; otherwise emit the PLAN block inline and STOP. kerby is behavioral — this gate is *instructed, not enforced*, so the emitted plan is the only proof it ran. Skipping it silently is a failure.
+- **Grade 4–6 (≥ threshold, < 7):** write the plan, then proceed to implement — no approval stop.
+- **Grade ≥ 7:** after the plan, **STOP and get user approval** before implementing.
+- Use your platform's native plan mode if it exposes one; otherwise emit the PLAN block inline. (The STOP belongs to the grade ≥ 7 case above — emitting a medium-grade plan inline does not by itself halt work.) kerby is behavioral — this gate is *instructed, not enforced*, so the emitted plan is the only proof it ran. Skipping it silently is a failure.
 - A user opt-out (§ 2.5) waives the plan but is logged; the grade is still emitted.
 
 ### Branching
