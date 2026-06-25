@@ -124,6 +124,22 @@ else
     fi
   done <<< "$GLOBS_IN_SPEC"
   [[ "$MISSING" -eq 0 ]] && pass "parity: all §3 globs present in the runtime GLOBS array"
+
+  # Reverse direction — every runtime GLOBS entry must STILL exist in §3. Without
+  # this, a glob removed or renamed in §3 but left in GLOBS keeps the hook firing
+  # on paths BOOTSTRAP no longer treats as high-stakes, while parity still passes.
+  # Forward + reverse = set equality. (The prose-only traffic-shaping gap lives in
+  # §3 but never in GLOBS, so it doesn't affect this GLOBS⊆spec direction.)
+  STALE=0
+  for g in "${GLOBS[@]}"; do
+    if printf '%s\n' "$GLOBS_IN_SPEC" | grep -qxF "$g"; then
+      pass "parity: GLOBS entry present in §3: $g"
+    else
+      fail "parity: GLOBS entry NOT in §3 (stale/renamed?): $g"
+      STALE=$((STALE + 1))
+    fi
+  done
+  [[ "$STALE" -eq 0 ]] && pass "parity: no stale GLOBS entries (every runtime glob is in §3)"
 fi
 
 echo "---"
