@@ -3,6 +3,28 @@
 All notable changes to `kerby` are documented here. Format follows
 [Keep a Changelog](https://keepachangelog.com/); versioning is semver.
 
+## [5.5.0] — 2026-06-25
+
+Fixed the **soft-hook delivery channel**. A PreToolUse hook's stderr is surfaced to the
+agent only on the exit-2 *block* path; on exit 0 the only channel the agent reads is
+JSON-on-stdout (`hookSpecificOutput.additionalContext`). Two existing soft hooks were
+therefore silently swallowed in real Claude Code — they "passed" only because their
+self-tests captured the wrong stream:
+
+- **`warn-env-read.sh`** emitted the `.env`-read reminder to stderr + exit 0. It now emits
+  `hookSpecificOutput.additionalContext` on stdout, with **no** `permissionDecision` (the
+  read proceeds through normal permissions — this only adds context).
+- **`pre-commit-check.sh`**'s soft lint/test reminder `cat`'d plain text to stdout + exit 0
+  (plain, non-JSON stdout is also ignored for PreToolUse). It is now wrapped as
+  `additionalContext` JSON. The secret-scan hard-block (exit 2 + stderr) is correct and
+  unchanged.
+
+Both self-tests now assert the stdout-JSON path, that no `permissionDecision` is set, and
+that nothing is written to stderr. `hooks.md`'s strictness lines and exit-code table are
+corrected, with a gotcha note so future hook authors don't repeat the stderr-on-exit-0
+mistake. (Same delivery mechanism the `route-high-stakes` hook shipped with in 5.4.0; this
+back-fills the two pre-existing hooks.)
+
 ## [5.4.0] — 2026-06-25
 
 Moved BOOTSTRAP §3's **high-stakes path override** from `[behavioral]` to

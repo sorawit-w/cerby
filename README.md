@@ -106,13 +106,16 @@ These are not decoration. They are what every verdict comes back to:
 
 ## Status
 
-Current release: `5.4.0` — moves BOOTSTRAP §3's **high-stakes path override** from
-`[behavioral]` to `[enforced-partial]`. A new `route-high-stakes` PreToolUse hook matches
-every `Edit`/`Write` against §3's globs (auth / migrations / payments / infra / CI-CD) and
-reminds the agent to route through `feature.md`/`bugfix.md` + the §4 Plan Gate, not
-`quick-task` — advisory only (exit 0, disablable), so no new hard blocks. The hook's globs
-are parity-tested against §3 so they can't drift; §3's prose-only production-traffic-shaping
-category has no glob and stays `[behavioral]` (the named gap). See [CHANGELOG.md](CHANGELOG.md).
+Current release: `5.5.0` — fixes the **soft-hook delivery channel**. A PreToolUse hook's
+stderr on exit 0 is not surfaced to the agent (only JSON-on-stdout is), so the
+`warn-env-read` `.env`-read reminder and the `pre-commit-check` lint/test reminder were
+silently dropped in real Claude Code. Both now emit `hookSpecificOutput.additionalContext`
+on stdout (no `permissionDecision`, so nothing auto-approves); the secret-scan hard-block
+(exit 2 + stderr) is unchanged. `hooks.md`'s exit-code table gains a gotcha note so future
+hooks don't repeat it. See [CHANGELOG.md](CHANGELOG.md).
+
+Prior release: `5.4.0` — added the `route-high-stakes` PreToolUse hook, moving BOOTSTRAP
+§3's high-stakes path override from `[behavioral]` to `[enforced-partial]`.
 
 **Opinionated — read first.** These are one author's rules. Read
 [`skills/kerby/resources/BOOTSTRAP.md`](skills/kerby/resources/BOOTSTRAP.md) end-to-end
