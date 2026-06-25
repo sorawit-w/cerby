@@ -174,7 +174,7 @@ Only create the file with explicit user consent.
 
 After Phase 1 completes, ask once:
 
-> Also register `kerby`' Claude Code lifecycle hooks (`PreToolUse` / `SessionStart`)? These give deterministic enforcement on top of the rules — `protect-env`, `protect-git`, and `pre-commit-check` block destructive actions, and `warn-env-read` soft-reminds on `.env` reads; the SessionStart trio (`session-start-context`, `knowledge-bootstrap`, `context-bootstrap`) injects prior project state and scaffolds `.ai/knowledge/` + `CONTEXT.md`. Read `resources/references/hooks.md` first if you haven't. [y/n]
+> Also register `kerby`' Claude Code lifecycle hooks (`PreToolUse` / `SessionStart`)? These give deterministic enforcement on top of the rules — `protect-env`, `protect-git`, and `pre-commit-check` block destructive actions, `warn-env-read` soft-reminds on `.env` reads, and `route-high-stakes` reminds when you edit a §3 high-stakes path; the SessionStart trio (`session-start-context`, `knowledge-bootstrap`, `context-bootstrap`) injects prior project state and scaffolds `.ai/knowledge/` + `CONTEXT.md`. Read `resources/references/hooks.md` first if you haven't. [y/n]
 
 If `n`, end the install — Phase 2 is skipped, the skill is still fully usable.
 
@@ -276,7 +276,7 @@ If `y`:
 
 1. Ask which settings file to clean (same three options as `install` Phase 2; default: 2 — project `.claude/settings.local.json`).
 
-2. Read the settings file. Find every hook entry whose `command` ends in one of the six kerby script filenames (`protect-env.sh`, `protect-git.sh`, `pre-commit-check.sh`, `session-start-context.sh`, `knowledge-bootstrap.sh`, `context-bootstrap.sh`) AND whose path contains `/skills/kerby/resources/hooks/`. Show the full list of matched entries.
+2. Read the settings file. Find every hook entry whose `command` ends in one of the eight kerby script filenames (`protect-env.sh`, `warn-env-read.sh`, `protect-git.sh`, `pre-commit-check.sh`, `route-high-stakes.sh`, `session-start-context.sh`, `knowledge-bootstrap.sh`, `context-bootstrap.sh`) AND whose path contains `/skills/kerby/resources/hooks/`. Show the full list of matched entries.
 
 3. Single final confirmation — `Remove these entries? [y/n]`. On `n`, abort.
 

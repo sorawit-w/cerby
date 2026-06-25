@@ -64,17 +64,32 @@ ERR=$(printf '{"tool_input":{"file_path":"src/auth/login.ts"}}' | CODING_RULES_H
   || fail "disabled should be silent (rc=$RC, err='$ERR')"
 
 # --- Glob parity with BOOTSTRAP §3 (teeth-bearing) ---------------------------
-# Extract the high-stakes override block, pull every backticked token that looks
-# like a glob (contains a '*'), and assert each is embedded verbatim in the hook.
-# The prod-traffic-shaping bullet has no backticked globs, so it is naturally and
-# correctly excluded — see the COVERAGE GAP note in route-high-stakes.sh.
+# Extract the high-stakes override block, scope to its category bullets ('- **'),
+# drop the prose production-traffic-shaping bullet (the documented [behavioral]
+# gap — see the COVERAGE GAP note in route-high-stakes.sh), then assert every
+# backticked token in the remaining bullets is embedded verbatim in the hook.
+# No wildcard filter: a future non-wildcard §3 path (e.g. a bare `Dockerfile` or
+# `.github/dependabot.yml`) must NOT silently slip the guard. This fails CLOSED —
+# a stray backticked token in a category bullet demands explicit handling rather
+# than a silent pass.
 if [[ ! -f "$BOOTSTRAP" ]]; then
   fail "cannot find BOOTSTRAP.md at $BOOTSTRAP for parity check"
 else
   BLOCK=$(sed -n '/High-stakes path override/,/blast radius/p' "$BOOTSTRAP")
-  GLOBS_IN_SPEC=$(printf '%s\n' "$BLOCK" | grep -oE '`[^`]+`' | tr -d '`' | grep '\*' | sort -u)
+  GLOBS_IN_SPEC=$(printf '%s\n' "$BLOCK" \
+    | grep '^- \*\*' \
+    | grep -vi 'traffic-shaping' \
+    | grep -oE '`[^`]+`' | tr -d '`' | sort -u)
   if [[ -z "$GLOBS_IN_SPEC" ]]; then
     fail "parity: extracted zero globs from §3 — extraction is broken"
+  fi
+  # The prod-traffic-shaping category must contribute no required globs (it is the
+  # named, un-globbable [behavioral] gap). If it ever sprouts a backticked token,
+  # this guard's exclusion above keeps it out — assert the exclusion still holds.
+  if printf '%s\n' "$BLOCK" | grep -i 'traffic-shaping' | grep -q '`'; then
+    pass "parity: prod-traffic-shaping has backticks but is correctly excluded"
+  else
+    pass "parity: prod-traffic-shaping contributes no globs (prose-only)"
   fi
   MISSING=0
   while IFS= read -r g; do
