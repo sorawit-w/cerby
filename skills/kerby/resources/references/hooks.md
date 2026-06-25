@@ -85,7 +85,7 @@ Prevents the agent from editing `.env` files directly. This is a security guardr
 ### PreToolUse → .env Read Warning
 
 **Script:** `hooks/warn-env-read.sh`
-**Strictness:** Soft-warn (exit 0 with stderr note) — disablable
+**Strictness:** Soft-warn (exit 0; injects the reminder via stdout JSON `hookSpecificOutput.additionalContext`) — disablable
 **Matcher:** `Read` targeting `.env` files
 
 The behavioral counterpart to `protect-env`. Reading a `.env` is legitimate (the agent often needs the variable *names* to wire things up), so this never blocks — it only reminds the agent not to print secret *values* into the conversation. Disablable via `CODING_RULES_HOOK_DISABLED=warn-env-read`.
@@ -111,12 +111,12 @@ Makes BOOTSTRAP §3's high-stakes path override **[enforced-partial]** instead o
 ### PreToolUse → Pre-Commit Check
 
 **Script:** `hooks/pre-commit-check.sh`
-**Strictness:** Soft-warn (exit 0 with context) + Hard-block on secrets (exit 2)
+**Strictness:** Soft-warn (exit 0; reminder via stdout JSON `hookSpecificOutput.additionalContext`) + Hard-block on secrets (exit 2 + stderr)
 **Matcher:** `Bash` running `git commit`
 
 Two checks before every commit:
 1. **Secret scan (hard-block)** — Capability-gated on the binary: prefers `betterleaks`, then `gitleaks`, if either is on `PATH` (broader coverage, respects the scanner's repo-local allowlist), scanning the staged *added* lines via the version-stable `stdin` mode (`git diff --cached -U0 | <scanner> stdin --exit-code 7`). Falls back to a built-in regex (`sk_live_`, `AKIA`, private keys, hardcoded passwords) when no scanner is present or it errors. A *finding* (distinct exit code 7) blocks the commit; a *tool error* (any other nonzero — their default exit 1 means "leaks OR error") falls through to the regex rather than phantom-blocking. Cannot be disabled via env var. Self-tested by `hooks/pre-commit-check.test.sh`. *(betterleaks is the gitleaks author's feature-frozen-gitleaks successor; the `stdin` invocation is what survives gitleaks' 8.19 reorg that deprecated `protect`.)*
-2. **Quality gate reminder (soft-warn)** — Injects a reminder to run lint/test on changed files. Does NOT hard-block — this avoids trapping the agent on pre-existing lint errors from other developers.
+2. **Quality gate reminder (soft-warn)** — Injects a reminder to run lint/test on changed files via `additionalContext`. Does NOT hard-block — this avoids trapping the agent on pre-existing lint errors from other developers. Because a PreToolUse `additionalContext` surfaces *with* the tool result (next turn), this reminder arrives as the commit completes — it is a **post-commit safety net** (run the gates, amend if your changes broke them), not a pre-commit veto. The veto in this hook is the secret scan above (exit 2, pre-execution). Turning the reminder into a true checkpoint would mean `permissionDecision: ask`/`deny` — a deliberate commit-discipline change, intentionally not made here.
 
 ---
 
@@ -261,9 +261,11 @@ You can extend kerby's hooks by adding to your project's `.claude/settings.json`
 
 | Exit Code | Behavior | Use For |
 |-----------|----------|---------|
-| `0` | Success — stdout injected as context | Reminders, soft warnings |
-| `2` | Blocking error — action prevented, stderr shown | Security violations, hard rules |
+| `0` | Success — to add context for the agent, print JSON `{"hookSpecificOutput":{"hookEventName":"PreToolUse","additionalContext":"…"}}` on **stdout**. Plain (non-JSON) stdout and **stderr are NOT surfaced to the agent on exit 0** — a reminder written to stderr+exit 0 is silently dropped. | Reminders, soft warnings |
+| `2` | Blocking error — action prevented, **stderr shown** to the agent | Security violations, hard rules |
 | Other | Non-blocking error — logged, action proceeds | Diagnostics, optional checks |
+
+> **Gotcha (cost us two hooks):** on exit 0 the only channel the agent reads is JSON-on-stdout (`additionalContext`). A non-blocking advisory must use that — *not* `echo … >&2`. stderr reaches the agent only on the exit-2 block path. For an advisory that must not block, emit `additionalContext` and set **no** `permissionDecision` (a `permissionDecision` of `allow`/`deny` would auto-approve or block the call).
 
 ---
 

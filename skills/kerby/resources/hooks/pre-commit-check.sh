@@ -2,7 +2,10 @@
 # Hook: Soft-warn if lint/test haven't been run before committing
 # Type: PreToolUse on Bash matching git commit
 # Name: pre-commit-check
-# Exit 0 = allow action, stdout injected as context for the agent
+# Exit 0 = allow action. The soft reminder is injected as JSON on STDOUT
+# (hookSpecificOutput.additionalContext) — plain stdout on exit 0 is NOT surfaced
+# to the agent for PreToolUse. The hard-block path uses exit 2 + stderr (which IS
+# shown on the blocking path).
 #
 # This does NOT hard-block commits. It checks if lint/test commands
 # were run recently in this session and reminds the agent if not.
@@ -88,14 +91,24 @@ case ",${CODING_RULES_HOOK_DISABLED:-}," in
   *,pre-commit-check,*) exit 0 ;;
 esac
 
-# Soft reminder — injected as context, does not block
-cat <<'EOF'
-REMINDER (kerby): Before committing, ensure you have:
-1. Run the project's lint command on your changed files
-2. Run the project's test suite
-3. Verified the build passes
-If any of these are failing due to YOUR changes, fix them before committing.
-Pre-existing failures from other code are acceptable — do not block on them.
-EOF
+# Soft reminder — injected as context via JSON additionalContext (plain stdout on
+# exit 0 is ignored for PreToolUse); does not block. NOTE: a PreToolUse
+# additionalContext surfaces WITH the tool result (next turn), so this reminder
+# arrives as the commit completes — it is a post-commit safety net, not a gate.
+# The gate in this hook is the secret scan above (exit 2, pre-execution). Making
+# this reminder gate the commit would mean permissionDecision ask/deny — a
+# deliberate commit-discipline change, out of scope here.
+# Plain double-quoted string (literal newlines), NOT a heredoc-in-$(...). Under
+# bash 3.2 (macOS default) the command-substitution parser counts quotes even
+# inside a quoted heredoc, so an ODD number of apostrophes in the body fails with
+# "unexpected EOF while looking for matching '". Keeping this inline and
+# apostrophe-free (like warn-env-read.sh) sidesteps it entirely.
+REMINDER="REMINDER (kerby): verify your changes against the project gates —
+1. lint on the changed files
+2. the test suite
+3. the build
+This advisory surfaces WITH the commit result and does NOT block it; if your changes broke any gate, run it and amend the commit. Pre-existing failures from other code are acceptable — do not block on them."
+jq -n --arg ctx "$REMINDER" \
+  '{hookSpecificOutput:{hookEventName:"PreToolUse",additionalContext:$ctx}}'
 
 exit 0

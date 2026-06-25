@@ -2,7 +2,10 @@
 # Hook: Soft-warn when the agent READS a .env file (security awareness)
 # Type: PreToolUse on Read matching .env
 # Name: warn-env-read
-# Exit 0 = allow action; stderr surfaced to the agent as feedback.
+# Exit 0 always (never blocks). On a .env match it emits a PreToolUse advisory as
+# JSON on STDOUT (hookSpecificOutput.additionalContext) — the documented channel
+# the agent reads on exit 0. Plain stderr on exit 0 is NOT surfaced to the model
+# for PreToolUse, so this hook does not use stderr.
 #
 # This is the soft, behavioral counterpart to protect-env.sh (which HARD-blocks
 # .env *edits*). Reading .env is legitimate (the agent often needs the var names
@@ -29,7 +32,10 @@ if [[ -z "$FILE_PATH" ]]; then
 fi
 
 if echo "$FILE_PATH" | grep -qE '\.env($|\.)'; then
-  echo "NOTE (kerby): you may read this .env file, but never print its secret values into the conversation — mask to last-4 if you must reference one. See kerby guardrails." >&2
+  # Inject the reminder as JSON on stdout (the channel the agent reads on exit 0);
+  # no permissionDecision, so the read proceeds normally — this only adds context.
+  jq -n --arg ctx "NOTE (kerby): you may read this .env file, but never print its secret values into the conversation — mask to last-4 if you must reference one. See kerby guardrails." \
+    '{hookSpecificOutput:{hookEventName:"PreToolUse",additionalContext:$ctx}}'
 fi
 
 exit 0

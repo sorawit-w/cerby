@@ -133,6 +133,24 @@ reset_index; stage_secret
 rc=0; ( cd "$REPO" && echo '{"tool_input":{"command":"git status"}}' | PATH="$BIN_NO" bash "$HOOK" >/dev/null 2>&1 ) || rc=$?
 [[ "$rc" -eq 0 ]] && pass "non-commit command exits 0 early" || fail "non-commit should exit 0 (got $rc)"
 
+# I. Soft reminder is emitted as JSON additionalContext on STDOUT (plain stdout on
+#    exit 0 is ignored for PreToolUse). Clean staged + no scanner -> reminder path.
+#    Capture stdout and stderr separately so a regression that adds stderr-on-exit-0
+#    or a permissionDecision is caught (mirrors the warn-env-read .env assertions).
+reset_index; stage_clean
+ERRF="$TMP/reminder_err"
+OUT=$( cd "$REPO" && echo "$COMMIT_INPUT" | PATH="$BIN_NO" SCANNER_ARGS_FILE="$ARGS_FILE" bash "$HOOK" 2>"$ERRF" ); rc=$?
+CTX=$(printf '%s' "$OUT" | jq -r '.hookSpecificOutput.additionalContext // empty' 2>/dev/null)
+DEC=$(printf '%s' "$OUT" | jq -r '.hookSpecificOutput.permissionDecision // empty' 2>/dev/null)
+ERRTXT=$(cat "$ERRF")
+{ [[ "$rc" -eq 0 ]] && printf '%s' "$CTX" | grep -q "REMINDER (kerby)"; } \
+  && pass "soft reminder emitted as JSON additionalContext on stdout" \
+  || fail "soft reminder should be JSON additionalContext (rc=$rc, out='$OUT')"
+[[ -z "$DEC" ]] && pass "soft reminder sets no permissionDecision (no auto-approve)" \
+  || fail "soft reminder must not set permissionDecision (got '$DEC')"
+[[ -z "$ERRTXT" ]] && pass "soft reminder writes nothing to stderr (uses stdout JSON)" \
+  || fail "soft reminder should not write to stderr (got '$ERRTXT')"
+
 # --- Summary -----------------------------------------------------------------
 echo "---"
 if [[ "$FAILS" -eq 0 ]]; then
