@@ -32,6 +32,11 @@ index of third-party copyright statements required by the upstream licenses.
 - GSD (Get Shit Done) — five prose-level patterns across
   `references/sub-agent-delegation.md`, `implementation-planning.md`,
   `working-patterns.md`/`quality-gates.md`, `guardrails.md`, and `roadmap.md`.
+- `paulDuvall/ai-development-patterns` (MIT) — the *Progressive Disclosure*
+  pattern (a PreToolUse hook that matches the edited path against globs and
+  injects a context pointer), reimplemented to kerby's hook convention as
+  `skills/kerby/resources/hooks/route-high-stakes.sh`. Concept only — no
+  verbatim shell.
 
 The remaining entries in `resources/references/external-resources.md` are
 cross-references (not absorbed) and carry their own inline links.

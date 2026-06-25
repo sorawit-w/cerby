@@ -3,6 +3,26 @@
 All notable changes to `kerby` are documented here. Format follows
 [Keep a Changelog](https://keepachangelog.com/); versioning is semver.
 
+## [5.4.0] — 2026-06-25
+
+Moved BOOTSTRAP §3's **high-stakes path override** from `[behavioral]` to
+`[enforced-partial]`. A new `route-high-stakes` PreToolUse hook
+(`hooks/route-high-stakes.sh`) matches every `Edit`/`Write` against §3's globs
+(auth / schema migrations / payments / infrastructure / CI-CD) and, on a match,
+reminds the agent that the change requires `workflows/feature.md` or `bugfix.md`
++ the §4 Plan Gate — not `quick-task.md`, even for a one-liner. It is advisory:
+exit 0, injecting the reminder via stdout JSON (`hookSpecificOutput.additionalContext`,
+the channel a PreToolUse hook's output actually reaches the agent on exit 0; it carries
+no `permissionDecision`, so the edit still goes through normal permissions), disablable
+via `CODING_RULES_HOOK_DISABLED=route-high-stakes` — routing is a decision, not a
+destructive-action veto, so no new hard blocks.
+The matched globs are embedded byte-identical to §3 and `route-high-stakes.test.sh`
+asserts parity, so the hook and the rule can't silently drift. §3's prose-only
+*production-traffic-shaping* category has no glob and stays `[behavioral]` — that
+named gap is what keeps the tier `[enforced-partial]` rather than `[enforced]`.
+Pattern absorbed concept-only from `paulDuvall/ai-development-patterns` (MIT) —
+Progressive Disclosure; see `NOTICE`.
+
 ## [5.3.0] — 2026-06-22
 
 Made the **complexity grade observable** and turned "plan first" into a hard gate.

@@ -106,13 +106,13 @@ These are not decoration. They are what every verdict comes back to:
 
 ## Status
 
-Current release: `5.3.0` — makes the **complexity grade observable** and turns "plan
-first" into a hard gate. `BOOTSTRAP.md` §2.5 emits the grade before routing; the §4
-**Plan Gate** requires a plan with **Expected Outcomes** at grade ≥ `plan_threshold`
-(`ai.planThreshold`, default 4) and approval at ≥7. The three complexity tables collapse
-into one canonical ladder, and the finish step adds **Realized Outcomes** (`outcome:
-match | mismatch` with code-wrong / prediction-wrong / ambiguous routing).
-See [CHANGELOG.md](CHANGELOG.md).
+Current release: `5.4.0` — moves BOOTSTRAP §3's **high-stakes path override** from
+`[behavioral]` to `[enforced-partial]`. A new `route-high-stakes` PreToolUse hook matches
+every `Edit`/`Write` against §3's globs (auth / migrations / payments / infra / CI-CD) and
+reminds the agent to route through `feature.md`/`bugfix.md` + the §4 Plan Gate, not
+`quick-task` — advisory only (exit 0, disablable), so no new hard blocks. The hook's globs
+are parity-tested against §3 so they can't drift; §3's prose-only production-traffic-shaping
+category has no glob and stays `[behavioral]` (the named gap). See [CHANGELOG.md](CHANGELOG.md).
 
 **Opinionated — read first.** These are one author's rules. Read
 [`skills/kerby/resources/BOOTSTRAP.md`](skills/kerby/resources/BOOTSTRAP.md) end-to-end

@@ -67,7 +67,11 @@ The skill-internal authoring guide lives at
 [`skills/kerby/CLAUDE.md`](skills/kerby/CLAUDE.md) — read it before changing rule text
 (every rule carries a recurring input-token cost; each should trace to a real past
 failure). Run `python3 scripts/check-skill-compat.py` after any frontmatter or
-version-bearing change.
+version-bearing change, and `bash scripts/check-plan-gate-parity.sh` after any
+change to the plan_threshold default or the grade-≥7 approval point (it fails if
+those constants drift across the files that restate them — BOOTSTRAP, the
+workflows, working-patterns, the schema, the template; the checked set is listed
+in the script). If you add a new restatement, add the file to that set.
 
 The product voice — how kerby *talks* in the README, verdict output, and CHANGELOG — is
 specified in [`VOICE.md`](VOICE.md). Read it before editing any persona-bearing copy; the

@@ -9,6 +9,8 @@ What NOT to do, how to stay on task, security awareness, and documentation hygie
 
 A shell hook fires at the *tool boundary* and can block an action; it cannot reach inside the model's context, so secret-*printing*, prompt-injection resistance, and prod-op safety are structurally [behavioral]. Full map and threat model: `references/threat-model.md`.
 
+The two **[enforced-partial]** hooks today are `warn-env-read` (Read-tool `.env` reads — a Bash `cat .env` is the named gap) and `route-high-stakes` (Edit/Write on BOOTSTRAP §3 high-stakes paths — auth/migrations/payments/infra/CI; §3's prose-only *production-traffic-shaping* category is the named gap, un-globbable by nature). Both advise, never block — they raise the floor where a hook can see the path but the decision still lives in the model's context.
+
 ---
 
 ## What NOT to Do
