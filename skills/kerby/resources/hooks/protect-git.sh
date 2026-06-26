@@ -28,9 +28,10 @@
 # destructive blocks stay non-disablable). Use it inline, per-command:
 #   CODING_RULES_ALLOW_PROTECTED_COMMIT=1 git commit …
 # and only when the user has explicitly authorized committing to the protected
-# branch. The hook detects this assignment IN THE COMMAND STRING (it runs before
-# the command, so it can't read the child shell's env). An ambiently-exported
-# var is deliberately NOT honored — that would be a session-wide self-bypass.
+# branch. The hook detects this assignment IN THE COMMAND STRING and only when it
+# directly prefixes the `git commit` (it runs before the command, so it can't read
+# the child shell's env). An ambiently-exported var, or the token appearing
+# elsewhere in the command, is deliberately NOT honored — both are self-bypasses.
 
 set -u
 
@@ -97,28 +98,26 @@ fi
 
 # 7. Commit while ON a protected branch (WORKFLOW guard — escapable, unlike 1–6).
 # Unlike the checks above, this reads real repo state (the current branch), not
-# just the command string. Carve-outs keep it quiet except on the actual mistake
-# (committing onto main/develop/… mid-task instead of a feature branch).
+# just the command string.
 # `\bcommit\b([[:space:]]|$)` matches `git commit` / `-m …` / `--amend` but NOT
 # `git commit-graph` / `commit-tree` (the trailing `-` fails [[:space:]]|$).
+# A PreToolUse hook fires BEFORE the command runs and cannot predict the runtime
+# branch of a compound command (a `switch -c` may fail, its new branch may itself
+# be protected, `;` runs the commit regardless). So we do NOT try to carve out
+# `switch -c … && commit` one-liners — branch creation and the commit must be
+# SEPARATE commands. The only escape is the explicit inline override below.
 if echo "$LC" | grep -qE '\bgit\b[^|;&]*\bcommit\b([[:space:]]|$)'; then
-  # Carve-outs that allow the commit through:
-  #   (a) the documented inline override appears IN THE COMMAND STRING. A
-  #       PreToolUse hook runs BEFORE the command, so an inline `VAR=1 git commit`
-  #       assignment lives in the child shell the hook never sees — we must parse
-  #       it out of the command, not read our own environment. We deliberately do
-  #       NOT honor an ambiently-exported var: that would be the session-wide
-  #       self-bypass the behavioral rule forbids. (Match $CMD, not $LC — the var
-  #       name is upper-case and $LC is lower-cased.)
-  #   (b) a branch is created/switched BEFORE the commit, so the commit lands off
-  #       the protected branch. Order matters: `git commit … && git switch -c x`
-  #       commits to the protected branch FIRST and must NOT be carved out, so we
-  #       only inspect the command text preceding the first `commit`.
-  PRE_COMMIT="${LC%%commit*}"
-  if ! echo "$CMD" | grep -qE '(^|[[:space:]])CODING_RULES_ALLOW_PROTECTED_COMMIT=1([[:space:]]|$)' \
-     && ! echo "$PRE_COMMIT" | grep -qE '\b(checkout[[:space:]]+-b|switch[[:space:]]+-c)\b'; then
+  # Allow ONLY the documented inline override, and only when the assignment
+  # directly prefixes THIS git-commit invocation. A PreToolUse hook runs before
+  # the command, so an inline `VAR=1 git commit` assignment lives in the child
+  # shell the hook never sees — we parse it out of the command, not our own env,
+  # and deliberately do NOT honor an ambiently-exported var (session-wide
+  # self-bypass). Tying it to `…=1[[:space:]]+git…commit` prevents the token from
+  # counting when it merely appears elsewhere — an echo arg, a commit message, a
+  # different `&&` segment. (Match $CMD, not $LC — the var name is upper-case.)
+  if ! echo "$CMD" | grep -qE '(^|[[:space:]])CODING_RULES_ALLOW_PROTECTED_COMMIT=1[[:space:]]+git\b[^|;&]*\bcommit\b'; then
     CURRENT=$(git branch --show-current 2>/dev/null)
-    # (c) allow when there's nothing to commit onto yet or no branch:
+    # Allow when there's nothing to commit onto yet or no branch:
     #   - empty CURRENT = detached HEAD / not a repo
     #   - HEAD does not resolve = initial commit (unborn branch still reports a
     #     name via --show-current, so test HEAD separately)

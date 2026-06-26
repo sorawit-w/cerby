@@ -21,18 +21,20 @@ Added (`hooks/protect-git.sh` section 7):
   state rather than only the command string.
 - **Scoped, per-command override.** `CODING_RULES_ALLOW_PROTECTED_COMMIT=1` bypasses
   **only** the commit gate, for commits the user explicitly authorized. The hook detects
-  the assignment **in the command string** (`CODING_RULES_ALLOW_PROTECTED_COMMIT=1 git
-  commit …`) — a PreToolUse hook runs before the command, so it can't read the child
-  shell's env; an ambiently-exported var is deliberately **not** honored (that would be a
-  session-wide self-bypass). The destructive blocks (force-push, `reset --hard`,
-  `clean -f`, `branch -D`, wholesale discard) remain non-disablable. A new BOOTSTRAP line
-  scopes the override behaviorally: set it only on explicit authorization, never to
-  self-bypass.
+  the assignment **in the command string**, and only when it directly prefixes the git
+  commit (`CODING_RULES_ALLOW_PROTECTED_COMMIT=1 git commit …`) — a PreToolUse hook runs
+  before the command, so it can't read the child shell's env. An ambiently-exported var,
+  or the token appearing elsewhere in the command (an `echo` arg, a commit message, a
+  different `&&` segment), is deliberately **not** honored — all are self-bypasses. The
+  destructive blocks (force-push, `reset --hard`, `clean -f`, `branch -D`, wholesale
+  discard) remain non-disablable. A new BOOTSTRAP line scopes the override behaviorally:
+  set it only on explicit authorization, never to self-bypass.
 - **Carve-outs** to fire only on the real mistake: the repo's first-ever commit (unborn
-  HEAD), detached HEAD, and compound commands that create/switch a branch **before** the
-  commit (`git switch -c feat/x && git commit …`). Order is validated — only the command
-  text preceding the first `commit` is inspected, so `git commit … && git switch -c x`
-  (which commits to the protected branch first) is still blocked.
+  HEAD) and detached HEAD. Compound branch-create-then-commit one-liners
+  (`git switch -c x && git commit …`) are **not** carved out — a PreToolUse hook can't
+  prove the commit lands off the protected branch (the switch may fail, the new branch
+  may itself be protected like `release/*`, `;` runs the commit regardless), so branch
+  creation and the commit must be **separate** commands.
 
 Block-and-instruct, not auto-switch: the hook tells the agent to create a feature branch
 rather than silently creating one. Branch naming stays kerby-convention (`feat/`, `fix/`),

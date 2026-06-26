@@ -105,20 +105,34 @@ run_in "$R" "git commit -m x"
 unset CODING_RULES_ALLOW_PROTECTED_COMMIT
 [[ "$RC" -eq 2 ]] && pass "blocks: exported (non-inline) override does not bypass" || fail "exported override must NOT bypass (got $RC)"
 
-# allows: branch is created BEFORE the commit (carve-out b, correct order)
+# blocks: branch-create + commit in ONE command. A PreToolUse hook can't prove
+# the commit lands off the protected branch (switch may fail, new branch may be
+# protected, `;` runs commit regardless), so compound one-liners are NOT carved
+# out — branch creation and commit must be separate commands.
 R="$TMPROOT/on-main-branch-first"; repo_with_commit "$R" main
 run_in "$R" "git switch -c feat/y && git commit -m x"
-[[ "$RC" -eq 0 ]] && pass "allows: switch -c then commit on main" || fail "branch-first compound should allow (got $RC)"
+[[ "$RC" -eq 2 ]] && pass "blocks: switch -c && commit in one command (must split)" || fail "compound branch+commit must block (got $RC)"
 
-# blocks: commit comes BEFORE branch creation — commits to main first, must block
+# blocks: creating a protected branch then committing (release/* is protected)
+R="$TMPROOT/on-main-rel"; repo_with_commit "$R" main
+run_in "$R" "git switch -c release/1.0 && git commit -m x"
+[[ "$RC" -eq 2 ]] && pass "blocks: switch -c release/1.0 && commit" || fail "protected new branch must block (got $RC)"
+
+# blocks: commit comes BEFORE branch creation — commits to main first
 R="$TMPROOT/on-main-commit-first"; repo_with_commit "$R" main
 run_in "$R" "git commit -m x && git switch -c feat/y"
 [[ "$RC" -eq 2 ]] && pass "blocks: commit-then-switch -c on main" || fail "commit-before-branch must block (got $RC)"
 
-# blocks: a commit whose message merely contains 'switch -c' is not carved out
-R="$TMPROOT/on-main-msg"; repo_with_commit "$R" main
-run_in "$R" "git commit -m 'try switch -c later'"
-[[ "$RC" -eq 2 ]] && pass "blocks: 'switch -c' in commit message does not bypass" || fail "message red-herring must block (got $RC)"
+# blocks: override token as an arg in a different segment does NOT bypass
+# (the assignment must directly prefix the git commit, not appear anywhere)
+R="$TMPROOT/on-main-echo"; repo_with_commit "$R" main
+run_in "$R" "echo CODING_RULES_ALLOW_PROTECTED_COMMIT=1 && git commit -m x"
+[[ "$RC" -eq 2 ]] && pass "blocks: override token in another segment does not bypass" || fail "token-elsewhere must block (got $RC)"
+
+# blocks: override token inside the commit message does NOT bypass
+R="$TMPROOT/on-main-msgtoken"; repo_with_commit "$R" main
+run_in "$R" "git commit -m 'CODING_RULES_ALLOW_PROTECTED_COMMIT=1'"
+[[ "$RC" -eq 2 ]] && pass "blocks: override token in commit message does not bypass" || fail "token-in-message must block (got $RC)"
 
 # allows: initial commit, no HEAD yet, on main (carve-out c)
 R="$TMPROOT/fresh"; git -c init.defaultBranch=main init -q "$R"

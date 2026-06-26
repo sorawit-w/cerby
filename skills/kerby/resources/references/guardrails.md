@@ -49,7 +49,7 @@ These commands cause data loss that's hard or impossible to recover (`git reflog
 
 **[enforced-when-installed]** — `hooks/protect-git.sh` hard-blocks every command in this list (and allows the targeted/safe variants) when the Phase-2 hooks are registered. When they aren't, the rule is **[behavioral]**: rely on the self-check above. See `references/threat-model.md`.
 
-**Commit while on a protected branch** is also hard-blocked by `protect-git.sh` (section 7) when installed — but as a *workflow* guard, not data loss, so it has a scoped escape hatch the destructive blocks above do not: set `CODING_RULES_ALLOW_PROTECTED_COMMIT=1` inline for a single command (`CODING_RULES_ALLOW_PROTECTED_COMMIT=1 git commit …`), and **only when the user has explicitly authorized committing to that branch** — never to bypass the guard on your own. Carve-outs (the repo's first-ever commit, or a command that creates/switches to a branch first) keep it quiet otherwise.
+**Commit while on a protected branch** is also hard-blocked by `protect-git.sh` (section 7) when installed — but as a *workflow* guard, not data loss, so it has a scoped escape hatch the destructive blocks above do not: set `CODING_RULES_ALLOW_PROTECTED_COMMIT=1` inline directly before the commit (`CODING_RULES_ALLOW_PROTECTED_COMMIT=1 git commit …`), and **only when the user has explicitly authorized committing to that branch** — never to bypass the guard on your own. The override counts only as a direct prefix of `git commit`; an exported var or the token appearing elsewhere in the command does not. Carve-outs (the repo's first-ever commit, detached HEAD) keep it quiet otherwise; create the branch as a **separate** command before committing, not a `&&` one-liner.
 
 ---
 
