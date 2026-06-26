@@ -100,11 +100,14 @@ esac
 # kerby reserves the hard block (exit 2) for secrets, not correctness. Reports
 # COUNTS only — never echo raw test lines into the agent context. Pattern set is
 # apostrophe-free (see the bash 3.2 note below) and word-anchored so fit(/xit(
-# do not match the English word in a test description.
+# do not match the English word in a test description. Pathspecs are :(top)-
+# anchored so a commit run from a subdirectory still scans staged test files
+# repo-wide (a bare '*test*' is cwd-relative); .only/.skip permit a trailing dot
+# so chained forms (test.only.each, describe.skip.each) are caught too.
 HOLLOW_NOTE=""
-TEST_ADDED=$(git diff --cached --diff-filter=ACMR -U0 -- '*test*' '*spec*' '*Test*' '*Spec*' 2>/dev/null | grep -E '^\+[^+]')
+TEST_ADDED=$(git diff --cached --diff-filter=ACMR -U0 -- ':(top)*test*' ':(top)*spec*' ':(top)*Test*' ':(top)*Spec*' 2>/dev/null | grep -E '^\+[^+]')
 if [[ -n "$TEST_ADDED" ]]; then
-  FOCUS=$(printf '%s\n' "$TEST_ADDED" | grep -cE '\.only[ (]|\.skip[ (]|\bfdescribe\(|\bfit\(|\bxit\(|\bxdescribe\(|@pytest\.mark\.skip|@(Disabled|Ignore)\b|\bt\.Skip\(')
+  FOCUS=$(printf '%s\n' "$TEST_ADDED" | grep -cE '\.only[ (.]|\.skip[ (.]|\bfdescribe\(|\bfit\(|\bxit\(|\bxdescribe\(|@pytest\.mark\.skip|@(Disabled|Ignore)\b|\bt\.Skip\(')
   TRUE=$(printf '%s\n' "$TEST_ADDED" | grep -cE 'expect\( *true *\)\.(toBe\( *true *\)|toBeTruthy\()|assertTrue\( *[Tt]rue *\)|XCTAssertTrue\( *true *\)|assert\( *[Tt]rue *\)|assert +True\b')
   if [[ "$FOCUS" -gt 0 || "$TRUE" -gt 0 ]]; then
     HOLLOW_NOTE="

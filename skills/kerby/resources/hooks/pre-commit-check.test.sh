@@ -78,10 +78,24 @@ stage_nontest_only() { # .only outside a test/spec path — must NOT trip the he
   printf 'foo.only(bar);\n' > "$REPO/config.js"
   git -C "$REPO" add config.js
 }
+stage_test_chained() { # chained focus marker (Jest/Vitest parameterized): test.only.each
+  printf 'test.only.each([[1,1]])("p", (a,b) => { expect(a).toBe(b); });\n' > "$REPO/chained.test.js"
+  git -C "$REPO" add chained.test.js
+}
+stage_test_subdir() { # focused test staged at repo root — committed FROM a subdirectory
+  mkdir -p "$REPO/src"
+  printf 'describe.only("x", () => { it("y", () => { expect(sum(1,1)).toBe(2); }); });\n' > "$REPO/pkg.test.js"
+  git -C "$REPO" add pkg.test.js
+}
 # additionalContext for a clean-secret commit on the current index (no scanner -> regex floor, clean).
 hook_ctx() {
   local out
   out=$( cd "$REPO" && echo "$COMMIT_INPUT" | PATH="$BIN_NO" SCANNER_ARGS_FILE="$ARGS_FILE" bash "$HOOK" 2>/dev/null )
+  printf '%s' "$out" | jq -r '.hookSpecificOutput.additionalContext // empty' 2>/dev/null
+}
+hook_ctx_from() { # $1 = subdir (under REPO) to run the hook from — proves pathspec is not cwd-relative
+  local out
+  out=$( cd "$REPO/$1" && echo "$COMMIT_INPUT" | PATH="$BIN_NO" SCANNER_ARGS_FILE="$ARGS_FILE" bash "$HOOK" 2>/dev/null )
   printf '%s' "$out" | jq -r '.hookSpecificOutput.additionalContext // empty' 2>/dev/null
 }
 
@@ -202,6 +216,22 @@ CTX=$(hook_ctx)
 printf '%s' "$CTX" | grep -q "HOLLOW-TEST CHECK" \
   && fail "hollow-test advisory should NOT fire outside test/spec files" \
   || pass "non-test file with .only does not trigger advisory"
+
+# N. Chained focus marker (test.only.each / describe.skip.each) -> advisory fires.
+reset_index; stage_test_chained
+CTX=$(hook_ctx)
+printf '%s' "$CTX" | grep -q "HOLLOW-TEST CHECK" \
+  && pass "chained focus marker (.only.each) triggers advisory" \
+  || fail "advisory should fire on test.only.each (ctx='$CTX')"
+
+# O. Focused test staged at repo root, hook RUN FROM a subdirectory -> still
+#    detected. Regression guard for the :(top)-anchored pathspec (a cwd-relative
+#    '*test*' would return no diff from src/ and silently miss the file).
+reset_index; stage_test_subdir
+CTX=$(hook_ctx_from src)
+printf '%s' "$CTX" | grep -q "HOLLOW-TEST CHECK" \
+  && pass "advisory fires for root test file when committing from a subdir (:(top) pathspec)" \
+  || fail "top-anchored pathspec should catch test files regardless of cwd (ctx='$CTX')"
 
 # --- Summary -----------------------------------------------------------------
 echo "---"
