@@ -130,32 +130,45 @@ if echo "$LC" | grep -qE "$GIT_COMMIT_RE"; then
   STRIPPED=$(printf '%s' "$CMD" | sed -E 's/(^|[[:space:]])CODING_RULES_ALLOW_PROTECTED_COMMIT=1[[:space:]]+git[^|;&]*//g')
   STRIPPED_LC=$(printf '%s' "$STRIPPED" | tr '[:upper:]' '[:lower:]')
   if echo "$STRIPPED_LC" | grep -qE "$GIT_COMMIT_RE"; then
-    # Check EVERY remaining (unauthorized) commit invocation, not just the first —
-    # `git commit -m a; git -C /protected commit -m b` must block on the second even
-    # if the first targets an allowed repo. For each, probe the repo it targets:
-    # `git -C <path>` / `git --git-dir=<path>` commit in <path>, not the hook's cwd.
-    # Isolate each invocation, then take its target globals from it (git accepts
-    # globals in any order, so `-C` may sit after others; a `-C` on a different
-    # sub-command must NOT leak in). Match in original case — paths are
-    # case-sensitive and `-C` (chdir) ≠ `-c` (config). Last target token wins.
-    # (Residual: relative cumulative -C/--git-dir, quoted paths — see threat-model.)
-    while IFS= read -r INVOC; do
-      [[ -z "$INVOC" ]] && continue
-      GITDIR=$(printf '%s' "$INVOC" | grep -oE '(^|[[:space:]])--git-dir[=[:space:]][^[:space:]]+' | tail -1 | sed -E 's/.*--git-dir[=[:space:]]//')
-      CPATH=$(printf '%s' "$INVOC" | grep -oE '(^|[[:space:]])-C[[:space:]]+[^[:space:]]+' | tail -1 | sed -E 's/.*-C[[:space:]]+//')
-      # Prefer --git-dir (names the repo directly), else -C (chdir), else hook cwd.
-      # Explicit branches, not a bash array — `set -u` + macOS bash 3.2 makes
-      # empty-array expansion unsafe.
-      if [[ -n "$GITDIR" ]]; then
-        CURRENT=$(git --git-dir="$GITDIR" branch --show-current 2>/dev/null)
-        git --git-dir="$GITDIR" rev-parse --verify -q HEAD >/dev/null 2>&1 && HAS_HEAD=1 || HAS_HEAD=0
-      elif [[ -n "$CPATH" ]]; then
-        CURRENT=$(git -C "$CPATH" branch --show-current 2>/dev/null)
-        git -C "$CPATH" rev-parse --verify -q HEAD >/dev/null 2>&1 && HAS_HEAD=1 || HAS_HEAD=0
-      else
-        CURRENT=$(git branch --show-current 2>/dev/null)
-        git rev-parse --verify -q HEAD >/dev/null 2>&1 && HAS_HEAD=1 || HAS_HEAD=0
+    # Resolve the branch each commit would ACTUALLY land on, then block on the
+    # first protected one. Walk the command left-to-right by segment (split on
+    # && || ; via bash expansion — portable; BSD sed makes literal-\n unreliable):
+    #   - a `cd <path>` segment updates the effective directory for later BARE
+    #     commits (`cd /repo && git commit`), replayed in a subshell with literal
+    #     args — NEVER eval, so a path can't smuggle in a command.
+    #   - a commit segment resolves its target: explicit --git-dir/-C on the
+    #     invocation wins (git accepts globals in any order; a -C on a different
+    #     sub-command must not leak in), else the accumulated cd chain, else cwd.
+    # EVERY commit is checked, not just the first. Residual (a static pass can't
+    # model these): pipes, subshells, `cd -`/`cd` home, relative cumulative
+    # --git-dir, quoted separators/paths — see references/threat-model.md.
+    CDLIST=""
+    SEGTXT="$STRIPPED"
+    SEGTXT="${SEGTXT//&&/$'\n'}"; SEGTXT="${SEGTXT//||/$'\n'}"; SEGTXT="${SEGTXT//;/$'\n'}"
+    while IFS= read -r SEG; do
+      # `cd <path>` (not `cd -` / bare `cd`) → remember for later bare commits
+      if printf '%s' "$SEG" | grep -qE '^[[:space:]]*cd[[:space:]]+[^[:space:]-]'; then
+        CDLIST="${CDLIST}$(printf '%s' "$SEG" | sed -E 's/^[[:space:]]*cd[[:space:]]+//; s/[[:space:]].*$//')
+"
+        continue
       fi
+      printf '%s' "$SEG" | tr '[:upper:]' '[:lower:]' | grep -qE "$GIT_COMMIT_RE" || continue
+      GITDIR=$(printf '%s' "$SEG" | grep -oE '(^|[[:space:]])--git-dir[=[:space:]][^[:space:]]+' | tail -1 | sed -E 's/.*--git-dir[=[:space:]]//')
+      CPATH=$(printf '%s' "$SEG" | grep -oE '(^|[[:space:]])-C[[:space:]]+[^[:space:]]+' | tail -1 | sed -E 's/.*-C[[:space:]]+//')
+      if [[ -n "$GITDIR" ]]; then LOC="--git-dir=$GITDIR"
+      elif [[ -n "$CPATH" ]]; then LOC="-C $CPATH"
+      else LOC=""; fi
+      # Probe branch + HEAD in the effective location. Replay the cd chain in a
+      # subshell (literal `cd` args); `git $LOC` is unquoted only for arg-splitting
+      # — variable values are NOT re-tokenized, so `;`/`&` in a path stay literal.
+      CURRENT=$(
+        while IFS= read -r _d; do [ -n "$_d" ] && { cd "$_d" 2>/dev/null || exit 0; }; done <<< "$CDLIST"
+        git $LOC branch --show-current 2>/dev/null
+      )
+      HAS_HEAD=$(
+        while IFS= read -r _d; do [ -n "$_d" ] && { cd "$_d" 2>/dev/null || { echo 0; exit 0; }; }; done <<< "$CDLIST"
+        git $LOC rev-parse --verify -q HEAD >/dev/null 2>&1 && echo 1 || echo 0
+      )
       # Allow when there's nothing to commit onto yet or no branch:
       #   - empty CURRENT = detached HEAD / not a repo
       #   - HEAD does not resolve = initial commit (unborn branch still reports a name)
@@ -169,7 +182,7 @@ if echo "$LC" | grep -qE "$GIT_COMMIT_RE"; then
         echo "See kerby guardrails (hooks/protect-git.sh)." >&2
         exit 2
       fi
-    done < <(printf '%s' "$STRIPPED" | grep -oE "$GIT_COMMIT_RE")
+    done <<< "$SEGTXT"
   fi
 fi
 

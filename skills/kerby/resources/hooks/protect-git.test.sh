@@ -223,6 +223,19 @@ run_in "$CWD_FEAT" "git commit -m a; git -C $TGT_MAIN commit -m b"
 run_in "$CWD_FEAT" "git commit -m a; git -C $TGT_FEAT commit -m b"
 [[ "$RC" -eq 0 ]] && pass "allows: multiple commits all on feature repos" || fail "all-feature multi-commit must allow (got $RC)"
 
+# a leading `cd <repo>` changes where a BARE commit lands; honor it. cwd is on a
+# feature branch; cd into a repo on main, then a bare commit → must block.
+run_in "$CWD_FEAT" "cd $TGT_MAIN && git commit -m x"
+[[ "$RC" -eq 2 ]] && pass "blocks: cd <repo-on-main> && git commit" || fail "cd then bare commit must block (got $RC)"
+
+# cd into a feature-branch repo then commit → allowed
+run_in "$CWD_FEAT" "cd $TGT_FEAT && git commit -m x"
+[[ "$RC" -eq 0 ]] && pass "allows: cd <repo-on-feature> && git commit" || fail "cd to feature then commit must allow (got $RC)"
+
+# cd with a semicolon separator is also honored
+run_in "$CWD_FEAT" "cd $TGT_MAIN ; git commit -m x"
+[[ "$RC" -eq 2 ]] && pass "blocks: cd <repo-on-main> ; git commit" || fail "cd ; commit must block (got $RC)"
+
 echo "---"
 if [[ "$FAILS" -eq 0 ]]; then
   echo "All assertions passed."
