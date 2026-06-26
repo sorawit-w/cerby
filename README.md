@@ -114,9 +114,10 @@ assertions, as a soft advisory (counts only, never echoing a test line). It is t
 the hard block stays reserved for secrets — and it is honest about its ceiling: 0-match runs
 and gates over stubs stay agent-judged. See [CHANGELOG.md](CHANGELOG.md).
 
-Prior release: `5.5.0` — fixed the **soft-hook delivery channel**: a PreToolUse hook's
-stderr on exit 0 is not surfaced to the agent (only JSON-on-stdout is), so two soft
-reminders were silently dropped; both now emit `hookSpecificOutput.additionalContext`.
+Prior release: `5.6.0` — closed the **commit-on-protected-branch gap**: `protect-git.sh`
+blocked only *pushing* to a protected branch, so an agent could still `git commit` straight
+onto `main`/`develop` and only hit a wall at push. Section 7 now hard-blocks the commit
+itself, with a *scoped*, inline escape hatch for user-authorized commits.
 
 **Opinionated — read first.** These are one author's rules. Read
 [`skills/kerby/resources/BOOTSTRAP.md`](skills/kerby/resources/BOOTSTRAP.md) end-to-end
