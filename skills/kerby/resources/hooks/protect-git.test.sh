@@ -185,6 +185,20 @@ run_in "$CWD_FEAT" "git --no-pager -C $TGT_MAIN commit -m y"
 run_in "$CWD_FEAT" "git -C $TGT_MAIN status && git commit -m x"
 [[ "$RC" -eq 0 ]] && pass "allows: -C on a non-commit sub-command not used for commit" || fail "cross-invocation -C must not block (got $RC)"
 
+# globals matched by SHAPE, not a name list: an unlisted short flag (-P) or long
+# option (--config-env=...) before commit must still be detected as a commit.
+R="$TMPROOT/dash-P"; repo_with_commit "$R" main
+run_in "$R" "git -P commit -m x"
+[[ "$RC" -eq 2 ]] && pass "blocks: git -P commit on main (unlisted short global)" || fail "-P commit must block (got $RC)"
+
+R="$TMPROOT/config-env"; repo_with_commit "$R" main
+run_in "$R" "git --config-env=foo.bar=ENV commit -m x"
+[[ "$RC" -eq 2 ]] && pass "blocks: git --config-env=... commit on main" || fail "--config-env commit must block (got $RC)"
+
+# -P before -C must still resolve the -C target repo (not fall back to cwd)
+run_in "$CWD_FEAT" "git -P -C $TGT_MAIN commit -m x"
+[[ "$RC" -eq 2 ]] && pass "blocks: git -P -C <repo-on-main> commit" || fail "-P then -C target must block (got $RC)"
+
 echo "---"
 if [[ "$FAILS" -eq 0 ]]; then
   echo "All assertions passed."

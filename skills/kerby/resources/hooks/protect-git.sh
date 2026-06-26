@@ -113,9 +113,11 @@ fi
 #
 # Subcommand matcher: `git`, zero or more global options (some take an arg), then
 # `commit` as the subcommand (\b…([[:space:]]|$) so `commit-graph`/`commit-tree`
-# don't match). Keep GIT_GLOBAL_OPT roughly in sync with `git --help` globals;
-# an unknown global option before `commit` is a residual gap (see threat-model).
-GIT_GLOBAL_OPT='(-C[[:space:]]+[^[:space:]]+|-c[[:space:]]+[^[:space:]]+|--git-dir[=[:space:]][^[:space:]]+|--work-tree[=[:space:]][^[:space:]]+|--namespace[=[:space:]][^[:space:]]+|-p|--paginate|--no-pager|--bare|--no-replace-objects|--literal-pathspecs|--icase-pathspecs|--no-optional-locks)'
+# don't match). GIT_GLOBAL_OPT matches option SHAPES, not a hardcoded list of
+# names, so an unlisted or future global (`-P`, `--config-env=…`) before `commit`
+# is still skipped: value-taking `-C`/`-c` and separate-arg long opts consume their
+# argument; everything else is a `--long[=val]` or single-letter `-X` flag.
+GIT_GLOBAL_OPT='(-C[[:space:]]+[^[:space:]]+|-c[[:space:]]+[^[:space:]]+|--git-dir[=[:space:]][^[:space:]]+|--work-tree[=[:space:]][^[:space:]]+|--namespace[=[:space:]][^[:space:]]+|--super-prefix[=[:space:]][^[:space:]]+|--[A-Za-z][A-Za-z-]*=[^[:space:]]+|--[A-Za-z][A-Za-z-]*|-[A-Za-z])'
 GIT_COMMIT_RE="\\bgit\\b([[:space:]]+${GIT_GLOBAL_OPT})*[[:space:]]+commit\\b([[:space:]]|\$)"
 
 if echo "$LC" | grep -qE "$GIT_COMMIT_RE"; then
