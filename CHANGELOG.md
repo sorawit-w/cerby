@@ -19,14 +19,20 @@ Added (`hooks/protect-git.sh` section 7):
   `git branch --show-current` is a protected branch (`main`, `master`, `dev`, `develop`,
   `staging`, `trunk`, `release/*`). This is the hook's first check that reads live repo
   state rather than only the command string.
-- **Scoped, per-command override.** `CODING_RULES_ALLOW_PROTECTED_COMMIT=1` (used inline,
-  never exported) bypasses **only** the commit gate, for commits the user explicitly
-  authorized. The destructive blocks (force-push, `reset --hard`, `clean -f`, `branch -D`,
-  wholesale discard) remain non-disablable. A new BOOTSTRAP line scopes the override
-  behaviorally: set it only on explicit authorization, never to self-bypass.
+- **Scoped, per-command override.** `CODING_RULES_ALLOW_PROTECTED_COMMIT=1` bypasses
+  **only** the commit gate, for commits the user explicitly authorized. The hook detects
+  the assignment **in the command string** (`CODING_RULES_ALLOW_PROTECTED_COMMIT=1 git
+  commit …`) — a PreToolUse hook runs before the command, so it can't read the child
+  shell's env; an ambiently-exported var is deliberately **not** honored (that would be a
+  session-wide self-bypass). The destructive blocks (force-push, `reset --hard`,
+  `clean -f`, `branch -D`, wholesale discard) remain non-disablable. A new BOOTSTRAP line
+  scopes the override behaviorally: set it only on explicit authorization, never to
+  self-bypass.
 - **Carve-outs** to fire only on the real mistake: the repo's first-ever commit (unborn
-  HEAD), detached HEAD, and compound commands that create/switch a branch first
-  (`git switch -c feat/x && git commit …`).
+  HEAD), detached HEAD, and compound commands that create/switch a branch **before** the
+  commit (`git switch -c feat/x && git commit …`). Order is validated — only the command
+  text preceding the first `commit` is inspected, so `git commit … && git switch -c x`
+  (which commits to the protected branch first) is still blocked.
 
 Block-and-instruct, not auto-switch: the hook tells the agent to create a feature branch
 rather than silently creating one. Branch naming stays kerby-convention (`feat/`, `fix/`),

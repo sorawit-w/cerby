@@ -25,9 +25,12 @@
 # EXCEPTION — the commit-on-protected-branch check (section 7) is a WORKFLOW
 # guard, not a data-loss block, so it HAS a scoped escape hatch:
 # `CODING_RULES_ALLOW_PROTECTED_COMMIT=1` bypasses ONLY that check (the
-# destructive blocks stay non-disablable). Use it inline, per-command
-# (`CODING_RULES_ALLOW_PROTECTED_COMMIT=1 git commit …`), and only when the user
-# has explicitly authorized committing to the protected branch.
+# destructive blocks stay non-disablable). Use it inline, per-command:
+#   CODING_RULES_ALLOW_PROTECTED_COMMIT=1 git commit …
+# and only when the user has explicitly authorized committing to the protected
+# branch. The hook detects this assignment IN THE COMMAND STRING (it runs before
+# the command, so it can't read the child shell's env). An ambiently-exported
+# var is deliberately NOT honored — that would be a session-wide self-bypass.
 
 set -u
 
@@ -99,10 +102,21 @@ fi
 # `\bcommit\b([[:space:]]|$)` matches `git commit` / `-m …` / `--amend` but NOT
 # `git commit-graph` / `commit-tree` (the trailing `-` fails [[:space:]]|$).
 if echo "$LC" | grep -qE '\bgit\b[^|;&]*\bcommit\b([[:space:]]|$)'; then
-  # (a) explicit, auditable override → allow. (b) command creates/switches a
-  # branch first (checkout -b / switch -c) → allow, since the commit lands there.
-  if [[ "${CODING_RULES_ALLOW_PROTECTED_COMMIT:-}" != "1" ]] \
-     && ! echo "$LC" | grep -qE '\bgit\b.*\b(checkout[[:space:]]+-b|switch[[:space:]]+-c)\b'; then
+  # Carve-outs that allow the commit through:
+  #   (a) the documented inline override appears IN THE COMMAND STRING. A
+  #       PreToolUse hook runs BEFORE the command, so an inline `VAR=1 git commit`
+  #       assignment lives in the child shell the hook never sees — we must parse
+  #       it out of the command, not read our own environment. We deliberately do
+  #       NOT honor an ambiently-exported var: that would be the session-wide
+  #       self-bypass the behavioral rule forbids. (Match $CMD, not $LC — the var
+  #       name is upper-case and $LC is lower-cased.)
+  #   (b) a branch is created/switched BEFORE the commit, so the commit lands off
+  #       the protected branch. Order matters: `git commit … && git switch -c x`
+  #       commits to the protected branch FIRST and must NOT be carved out, so we
+  #       only inspect the command text preceding the first `commit`.
+  PRE_COMMIT="${LC%%commit*}"
+  if ! echo "$CMD" | grep -qE '(^|[[:space:]])CODING_RULES_ALLOW_PROTECTED_COMMIT=1([[:space:]]|$)' \
+     && ! echo "$PRE_COMMIT" | grep -qE '\b(checkout[[:space:]]+-b|switch[[:space:]]+-c)\b'; then
     CURRENT=$(git branch --show-current 2>/dev/null)
     # (c) allow when there's nothing to commit onto yet or no branch:
     #   - empty CURRENT = detached HEAD / not a repo

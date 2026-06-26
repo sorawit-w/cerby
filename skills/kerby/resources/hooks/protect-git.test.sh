@@ -91,17 +91,34 @@ R="$TMPROOT/on-feat"; repo_with_commit "$R" feat/x
 run_in "$R" "git commit -m x"
 [[ "$RC" -eq 0 ]] && pass "allows: git commit on feat/x" || fail "should allow commit on feat/x (got $RC)"
 
-# allows: commit on main with the scoped override
+# allows: commit on main with the scoped override — INLINE in the command, the
+# only form a PreToolUse hook can actually see (it runs before the child shell).
 R="$TMPROOT/on-main-override"; repo_with_commit "$R" main
+run_in "$R" "CODING_RULES_ALLOW_PROTECTED_COMMIT=1 git commit -m x"
+[[ "$RC" -eq 0 ]] && pass "allows: commit on main with inline override" || fail "inline override should allow (got $RC)"
+
+# blocks: an AMBIENTLY-EXPORTED override does NOT bypass (no inline assignment in
+# the command). This enforces the "inline only, never exported" scoping.
+R="$TMPROOT/on-main-exported"; repo_with_commit "$R" main
 export CODING_RULES_ALLOW_PROTECTED_COMMIT=1
 run_in "$R" "git commit -m x"
 unset CODING_RULES_ALLOW_PROTECTED_COMMIT
-[[ "$RC" -eq 0 ]] && pass "allows: commit on main with override" || fail "override should allow (got $RC)"
+[[ "$RC" -eq 2 ]] && pass "blocks: exported (non-inline) override does not bypass" || fail "exported override must NOT bypass (got $RC)"
 
-# allows: compound command that creates a branch first (carve-out b)
-R="$TMPROOT/on-main-compound"; repo_with_commit "$R" main
+# allows: branch is created BEFORE the commit (carve-out b, correct order)
+R="$TMPROOT/on-main-branch-first"; repo_with_commit "$R" main
 run_in "$R" "git switch -c feat/y && git commit -m x"
-[[ "$RC" -eq 0 ]] && pass "allows: switch -c then commit on main" || fail "compound branch-create should allow (got $RC)"
+[[ "$RC" -eq 0 ]] && pass "allows: switch -c then commit on main" || fail "branch-first compound should allow (got $RC)"
+
+# blocks: commit comes BEFORE branch creation — commits to main first, must block
+R="$TMPROOT/on-main-commit-first"; repo_with_commit "$R" main
+run_in "$R" "git commit -m x && git switch -c feat/y"
+[[ "$RC" -eq 2 ]] && pass "blocks: commit-then-switch -c on main" || fail "commit-before-branch must block (got $RC)"
+
+# blocks: a commit whose message merely contains 'switch -c' is not carved out
+R="$TMPROOT/on-main-msg"; repo_with_commit "$R" main
+run_in "$R" "git commit -m 'try switch -c later'"
+[[ "$RC" -eq 2 ]] && pass "blocks: 'switch -c' in commit message does not bypass" || fail "message red-herring must block (got $RC)"
 
 # allows: initial commit, no HEAD yet, on main (carve-out c)
 R="$TMPROOT/fresh"; git -c init.defaultBranch=main init -q "$R"
