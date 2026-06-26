@@ -11,15 +11,23 @@
 #   - git clean -f / -fd / --force
 #   - git branch -D / --delete --force
 #   - git checkout . / git restore . / git checkout -- . (wholesale local discard)
+#   - git commit while ON a protected branch (workflow guard — see below)
 #
 # Allows targeted variants: `git checkout -- src/foo.ts`, `git restore --staged file`,
 # `git push origin feature/foo`, `git clean -n` (dry run), etc.
 #
-# This hook is NOT disablable via CODING_RULES_HOOK_DISABLED.
+# The destructive blocks above are NOT disablable via CODING_RULES_HOOK_DISABLED.
 # Data-loss-critical hooks cannot be toggled off by an env var.
 # To bypass for a one-off, run the command yourself in a terminal.
 # To remove permanently, delete the hook entry from .claude/settings.json
 # (requires a deliberate file edit, not an ambient variable).
+#
+# EXCEPTION — the commit-on-protected-branch check (section 7) is a WORKFLOW
+# guard, not a data-loss block, so it HAS a scoped escape hatch:
+# `CODING_RULES_ALLOW_PROTECTED_COMMIT=1` bypasses ONLY that check (the
+# destructive blocks stay non-disablable). Use it inline, per-command
+# (`CODING_RULES_ALLOW_PROTECTED_COMMIT=1 git commit …`), and only when the user
+# has explicitly authorized committing to the protected branch.
 
 set -u
 
@@ -82,6 +90,36 @@ fi
 # Allows targeted pathspecs like `git checkout -- src/foo.ts`.
 if echo "$LC" | grep -qE '\bgit\b.*\b(checkout|restore)\b([[:space:]]+--)?[[:space:]]+\.([[:space:]]|$)'; then
   block "git checkout . / git restore . (wholesale local discard)"
+fi
+
+# 7. Commit while ON a protected branch (WORKFLOW guard — escapable, unlike 1–6).
+# Unlike the checks above, this reads real repo state (the current branch), not
+# just the command string. Carve-outs keep it quiet except on the actual mistake
+# (committing onto main/develop/… mid-task instead of a feature branch).
+# `\bcommit\b([[:space:]]|$)` matches `git commit` / `-m …` / `--amend` but NOT
+# `git commit-graph` / `commit-tree` (the trailing `-` fails [[:space:]]|$).
+if echo "$LC" | grep -qE '\bgit\b[^|;&]*\bcommit\b([[:space:]]|$)'; then
+  # (a) explicit, auditable override → allow. (b) command creates/switches a
+  # branch first (checkout -b / switch -c) → allow, since the commit lands there.
+  if [[ "${CODING_RULES_ALLOW_PROTECTED_COMMIT:-}" != "1" ]] \
+     && ! echo "$LC" | grep -qE '\bgit\b.*\b(checkout[[:space:]]+-b|switch[[:space:]]+-c)\b'; then
+    CURRENT=$(git branch --show-current 2>/dev/null)
+    # (c) allow when there's nothing to commit onto yet or no branch:
+    #   - empty CURRENT = detached HEAD / not a repo
+    #   - HEAD does not resolve = initial commit (unborn branch still reports a
+    #     name via --show-current, so test HEAD separately)
+    if [[ -n "$CURRENT" ]] && git rev-parse --verify -q HEAD >/dev/null 2>&1 \
+       && echo "$CURRENT" | grep -qE "^${PROTECTED}$"; then
+      echo "BLOCKED: git commit on protected branch '$CURRENT'." >&2
+      echo "Create a feature branch first: git checkout -b feat/<short-description>" >&2
+      echo "(or git switch -c fix/<...>), then stage and commit there." >&2
+      echo "Workflow guard, not data loss. To commit here intentionally — and only" >&2
+      echo "if the user authorized it — set the override inline for this command:" >&2
+      echo "  CODING_RULES_ALLOW_PROTECTED_COMMIT=1 git commit ..." >&2
+      echo "See kerby guardrails (hooks/protect-git.sh)." >&2
+      exit 2
+    fi
+  fi
 fi
 
 exit 0

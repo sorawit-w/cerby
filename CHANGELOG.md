@@ -3,6 +3,36 @@
 All notable changes to `kerby` are documented here. Format follows
 [Keep a Changelog](https://keepachangelog.com/); versioning is semver.
 
+## [5.6.0] — 2026-06-25
+
+Closed the **commit-on-protected-branch gap** in `protect-git.sh`. The hook previously
+blocked only `git push` to a protected branch and `git push --force`; `git commit` while
+*on* a protected branch was allowed (it was in the hook's own ALLOW test set). So an agent
+that forgot to branch would commit straight onto `main`/`develop` and only hit a wall at
+push time — leaving local commits on a protected branch to unwind. This is the
+intermittent, agent-to-agent-varying failure that prose rules alone (BOOTSTRAP "never work
+on protected branches") couldn't stop, because prose enforcement is probabilistic.
+
+Added (`hooks/protect-git.sh` section 7):
+
+- **Commit-time gate.** Hard-blocks `git commit` (incl. `--amend`) when
+  `git branch --show-current` is a protected branch (`main`, `master`, `dev`, `develop`,
+  `staging`, `trunk`, `release/*`). This is the hook's first check that reads live repo
+  state rather than only the command string.
+- **Scoped, per-command override.** `CODING_RULES_ALLOW_PROTECTED_COMMIT=1` (used inline,
+  never exported) bypasses **only** the commit gate, for commits the user explicitly
+  authorized. The destructive blocks (force-push, `reset --hard`, `clean -f`, `branch -D`,
+  wholesale discard) remain non-disablable. A new BOOTSTRAP line scopes the override
+  behaviorally: set it only on explicit authorization, never to self-bypass.
+- **Carve-outs** to fire only on the real mistake: the repo's first-ever commit (unborn
+  HEAD), detached HEAD, and compound commands that create/switch a branch first
+  (`git switch -c feat/x && git commit …`).
+
+Block-and-instruct, not auto-switch: the hook tells the agent to create a feature branch
+rather than silently creating one. Branch naming stays kerby-convention (`feat/`, `fix/`),
+not a vendor-specific prefix. Docs synced: `guardrails.md`, `threat-model.md`, `BOOTSTRAP.md`.
+Tests extended with real temp-repo cases (the string-only harness can't control the branch).
+
 ## [5.5.0] — 2026-06-25
 
 Fixed the **soft-hook delivery channel**. A PreToolUse hook's stderr is surfaced to the

@@ -48,7 +48,6 @@ ALLOW=(
   "git clean -n"
   "git branch -d oldfeature"
   "git status"
-  "git commit -m wip"
 )
 for cmd in "${ALLOW[@]}"; do
   run "$cmd"
@@ -58,6 +57,63 @@ done
 # Empty command -> exit 0.
 printf '{"tool_input":{"command":""}}' | bash "$HOOK" >/dev/null 2>&1
 [[ "$?" -eq 0 ]] && pass "empty command exits 0" || fail "empty command should exit 0"
+
+# --- Commit-on-protected-branch gate (needs real git state) ------------------
+# The string-only harness above can't control the current branch; the commit
+# gate reads `git branch --show-current`, so create real throwaway repos.
+TMPROOT=$(mktemp -d)
+trap 'rm -rf "$TMPROOT"' EXIT
+
+repo_with_commit() { # $1 = dir, $2 = branch to end on
+  git -c init.defaultBranch=main init -q "$1"
+  git -C "$1" config user.email t@t.t
+  git -C "$1" config user.name t
+  echo x > "$1/f"
+  git -C "$1" add -A
+  git -C "$1" -c commit.gpgsign=false commit -qm init
+  [[ "$2" != "main" ]] && git -C "$1" checkout -q -b "$2"
+  return 0
+}
+
+run_in() { # $1 = dir, $2 = command -> sets RC
+  printf '{"tool_input":{"command":%s}}' "$(printf '%s' "$2" | jq -R .)" \
+    | ( cd "$1" && bash "$HOOK" ) >/dev/null 2>&1
+  RC=$?
+}
+
+# blocks: commit while on main
+R="$TMPROOT/on-main"; repo_with_commit "$R" main
+run_in "$R" "git commit -m x"
+[[ "$RC" -eq 2 ]] && pass "blocks: git commit on main" || fail "should block commit on main (got $RC)"
+
+# allows: commit on a feature branch
+R="$TMPROOT/on-feat"; repo_with_commit "$R" feat/x
+run_in "$R" "git commit -m x"
+[[ "$RC" -eq 0 ]] && pass "allows: git commit on feat/x" || fail "should allow commit on feat/x (got $RC)"
+
+# allows: commit on main with the scoped override
+R="$TMPROOT/on-main-override"; repo_with_commit "$R" main
+export CODING_RULES_ALLOW_PROTECTED_COMMIT=1
+run_in "$R" "git commit -m x"
+unset CODING_RULES_ALLOW_PROTECTED_COMMIT
+[[ "$RC" -eq 0 ]] && pass "allows: commit on main with override" || fail "override should allow (got $RC)"
+
+# allows: compound command that creates a branch first (carve-out b)
+R="$TMPROOT/on-main-compound"; repo_with_commit "$R" main
+run_in "$R" "git switch -c feat/y && git commit -m x"
+[[ "$RC" -eq 0 ]] && pass "allows: switch -c then commit on main" || fail "compound branch-create should allow (got $RC)"
+
+# allows: initial commit, no HEAD yet, on main (carve-out c)
+R="$TMPROOT/fresh"; git -c init.defaultBranch=main init -q "$R"
+git -C "$R" config user.email t@t.t; git -C "$R" config user.name t
+echo x > "$R/f"; git -C "$R" add -A
+run_in "$R" "git commit -m init"
+[[ "$RC" -eq 0 ]] && pass "allows: initial commit on fresh repo" || fail "initial commit should allow (got $RC)"
+
+# allows: commit-graph maintenance on main (matcher precision, not a commit)
+R="$TMPROOT/cg"; repo_with_commit "$R" main
+run_in "$R" "git commit-graph write"
+[[ "$RC" -eq 0 ]] && pass "allows: git commit-graph write on main" || fail "commit-graph should allow (got $RC)"
 
 echo "---"
 if [[ "$FAILS" -eq 0 ]]; then

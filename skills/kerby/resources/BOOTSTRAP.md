@@ -138,7 +138,7 @@ Types: `feature`, `fix`, `refactor`, `test`, `docs`, `chore`
 
 **Exception:** `workflows/quick-task.md` stays in-place. Worktree overhead isn't justified for single-file edits or docs-only changes.
 
-Confirm you are on the correct branch before proceeding. If `git branch --show-current` returns a protected branch name, STOP and create a new branch/worktree.
+Confirm you are on the correct branch before proceeding. If `git branch --show-current` returns a protected branch name, STOP and create a new branch/worktree. When the hooks are installed, `protect-git.sh` also hard-blocks `git commit` while you are on a protected branch — only set `CODING_RULES_ALLOW_PROTECTED_COMMIT=1` (inline, one command) when the user has explicitly authorized a commit to that branch, never to bypass the guard on your own.
 
 Full worktree tactics (creation, lifecycle, cleanup, failure modes): `references/git-worktrees.md`
 

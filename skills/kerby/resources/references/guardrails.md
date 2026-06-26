@@ -21,14 +21,14 @@ The two **[enforced-partial]** hooks today are `warn-env-read` (Read-tool `.env`
 | Edit `.env` files or commit secrets             | Security risk                                    |
 | Change linter/formatter rules unilaterally      | Team convention — requires consensus             |
 | Rewrite large sections unprompted               | Scope creep, hard to review, risky               |
-| Push to protected branches (main, master, dev, develop, staging, release/*, trunk) | Always work on a feature branch |
+| Commit or push to protected branches (main, master, dev, develop, staging, release/*, trunk) | Always work on a feature branch |
 | Skip quality gates to "move faster"             | Tech debt compounds, broken builds cascade       |
 | Ignore existing patterns for "better" ones      | Consistency > local optimization                 |
 | Install major deps without approval             | Affects bundle size, licensing, maintenance      |
 | Delete files without confirming they're unused  | Broken imports are hard to debug later           |
 | Overwrite guideline/spec files                  | Read-only — these are team-maintained            |
 
-**Enforcement:** *Edit `.env`* and *commit secrets* (`protect-env`, `pre-commit-check`) and *push to protected branches* (`protect-git`) are **[enforced-when-installed]**. The rest are **[behavioral]**.
+**Enforcement:** *Edit `.env`* and *commit secrets* (`protect-env`, `pre-commit-check`) and *commit or push to protected branches* (`protect-git`) are **[enforced-when-installed]**. The rest are **[behavioral]**.
 
 ---
 
@@ -48,6 +48,8 @@ These commands cause data loss that's hard or impossible to recover (`git reflog
 **Self-check before running any git command:** match the proposed command against this list. If it matches, stop and ask the developer to run it themselves.
 
 **[enforced-when-installed]** — `hooks/protect-git.sh` hard-blocks every command in this list (and allows the targeted/safe variants) when the Phase-2 hooks are registered. When they aren't, the rule is **[behavioral]**: rely on the self-check above. See `references/threat-model.md`.
+
+**Commit while on a protected branch** is also hard-blocked by `protect-git.sh` (section 7) when installed — but as a *workflow* guard, not data loss, so it has a scoped escape hatch the destructive blocks above do not: set `CODING_RULES_ALLOW_PROTECTED_COMMIT=1` inline for a single command (`CODING_RULES_ALLOW_PROTECTED_COMMIT=1 git commit …`), and **only when the user has explicitly authorized committing to that branch** — never to bypass the guard on your own. Carve-outs (the repo's first-ever commit, or a command that creates/switches to a branch first) keep it quiet otherwise.
 
 ---
 
