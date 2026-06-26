@@ -106,18 +106,18 @@ These are not decoration. They are what every verdict comes back to:
 
 ## Status
 
-Current release: `5.6.0` — closes the **commit-on-protected-branch gap**. `protect-git.sh`
-previously blocked only *pushing* to a protected branch, so an agent could still `git commit`
-directly onto `main`/`develop` and only hit a wall at push. Section 7 now hard-blocks
-`git commit` while you are *on* a protected branch (parsing the git subcommand and reading
-the target repo's live branch), with a *scoped* escape hatch — `CODING_RULES_ALLOW_PROTECTED_COMMIT=1`,
-inline and directly prefixing the commit — for user-authorized commits, plus a carve-out for
-the repo's first-ever commit. Branch creation and the commit must be separate commands. The
-destructive blocks stay non-disablable. See [CHANGELOG.md](CHANGELOG.md).
+Current release: `5.7.0` — closes the **hollow-pass gap**. `validation.md` long *named* the
+green runs that prove nothing — always-true assertions, `.only`/`.skip` focused suites — but
+naming a fake is not catching one. `pre-commit-check.sh` now reads the diff: over the *added*
+lines of staged test files it statically flags focused/disabled markers and always-true
+assertions, as a soft advisory (counts only, never echoing a test line). It is the soft tier —
+the hard block stays reserved for secrets — and it is honest about its ceiling: 0-match runs
+and gates over stubs stay agent-judged. See [CHANGELOG.md](CHANGELOG.md).
 
-Prior release: `5.5.0` — fixed the **soft-hook delivery channel**: a PreToolUse hook's
-stderr on exit 0 is not surfaced to the agent (only JSON-on-stdout is), so two soft
-reminders were silently dropped; both now emit `hookSpecificOutput.additionalContext`.
+Prior release: `5.6.0` — closed the **commit-on-protected-branch gap**: `protect-git.sh`
+blocked only *pushing* to a protected branch, so an agent could still `git commit` straight
+onto `main`/`develop` and only hit a wall at push. Section 7 now hard-blocks the commit
+itself, with a *scoped*, inline escape hatch for user-authorized commits.
 
 **Opinionated — read first.** These are one author's rules. Read
 [`skills/kerby/resources/BOOTSTRAP.md`](skills/kerby/resources/BOOTSTRAP.md) end-to-end

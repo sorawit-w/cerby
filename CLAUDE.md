@@ -59,6 +59,20 @@ iterations* is *State preservation* applied mid-task; the two check rows are *Ob
 feedback loops* applied per-iteration. The rest (termination, retry budget, bounded
 search, fan-out) are loop-specific.
 
+**Bounded by design.** kerby's termination condition is deliberately *bounded*: the
+loop exits on fresh verification evidence (the Iron Law) **or** on an exhausted
+retry budget that escalates to a human (`BLOCKED`). It does **not** iterate
+unboundedly toward "perfect." That bound is a choice, not an omission — *never leave
+the repo broken* outranks autonomous self-correction, so a stuck loop hands off
+rather than flails. This is the intended departure from naive "verify-until-done"
+framings: a self-verification loop with no circuit breaker burns its budget
+re-deriving the same wrong fix. The verification gate also leans behavioral by
+design — the methodology travels across toolchains where a hardcoded check would not
+(`skills/kerby/CLAUDE.md` § Authoring style). The one mechanical floor under it is
+`resources/hooks/pre-commit-check.sh`: the non-disablable secret scan, plus a soft
+hollow-test heuristic that statically flags the green-but-empty fakes
+(`resources/references/validation.md` § What Counts as Evidence).
+
 ---
 
 ## Editing the rules

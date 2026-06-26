@@ -3,6 +3,38 @@
 All notable changes to `kerby` are documented here. Format follows
 [Keep a Changelog](https://keepachangelog.com/); versioning is semver.
 
+## [5.7.0] — 2026-06-26
+
+Closed the **hollow-pass gap** between the Iron Law and the gate. `validation.md` has long
+*named* the green runs that prove nothing — always-true assertions, `.only`/`.skip` focused
+suites — but naming a fake is not catching one. An agent that wrote `expect(true).toBe(true)`
+and reported "tests pass" was, by the letter, telling the truth. The gate now reads the diff
+instead of trusting the agent's memory of the rule.
+
+Added (`hooks/pre-commit-check.sh`):
+
+- **Hollow-test heuristic (soft).** Over the *added* lines of staged `*test*`/`*spec*` files,
+  statically flags the two fakes detectable without running anything: focused/disabled markers
+  (`.only`, `.skip`, `fit(`, `xit(`, `@Disabled`, `t.Skip`) and always-true assertions
+  (`expect(true).toBe(true)`, `assertTrue(True)`, …). Reports **counts only** — a test line can
+  carry a secret, so none are echoed back into context. Added-lines-only means a teammate's
+  pre-existing `.skip` never fires, and a commit that refactors one *out* is never punished for it.
+- **Advisory, not a block.** Surfaces as `additionalContext` alongside the commit — the same
+  soft tier as the lint/test reminder. The hard block (exit 2) stays reserved for secrets; a
+  focused test is a mistake to flag, not a breach to wall off. The two runtime fakes the Iron
+  Law also names — 0-match runs and gates over stubbed code — are not statically visible and
+  remain agent-judged; the hook does not pretend otherwise.
+
+Also:
+
+- **Harness vocabulary (`CLAUDE.md`).** New *Bounded by design* note under the control loop:
+  kerby's termination condition exits on fresh evidence **or** an exhausted retry budget that
+  escalates to a human — it does not loop unboundedly toward "perfect." The bound is the
+  deliberate departure from naive "verify-until-done" framings, where a loop with no circuit
+  breaker burns its budget re-deriving the same wrong fix.
+- **`validation.md`.** A pointer noting the hook now statically surfaces the first two fakes,
+  with the runtime two left explicitly to agent judgment.
+
 ## [5.6.0] — 2026-06-25
 
 Closed the **commit-on-protected-branch gap** in `protect-git.sh`. The hook previously

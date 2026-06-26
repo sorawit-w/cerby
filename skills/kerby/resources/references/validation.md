@@ -37,7 +37,7 @@ Verification produces *claims* about behavior — "the bug is fixed," "the perf 
 
 **Single observations are noise, not signal — especially for timing.** Perf claims, race-condition fixes, flaky-test stabilization, and any "this is faster / slower / now reliable" claim need repeated, interleaved trials before they're load-bearing. Use n≥10 as a floor; raise the floor when variance is high or stakes are large. A single fast/slow run is jitter, not evidence.
 
-**A passing test is non-evidence if it's hollow or its target is a stub.** The Iron Law already forbids claiming done without evidence; this names the specific fakes that *look* like evidence. Before trusting green: always-true assertions (`expect(true).toBe(true)`), `.skip`/`.only`-narrowed tests, 0-match runs, and gates run over placeholder code (`TODO`, stubbed returns) are not passes.
+**A passing test is non-evidence if it's hollow or its target is a stub.** The Iron Law already forbids claiming done without evidence; this names the specific fakes that *look* like evidence. Before trusting green: always-true assertions (`expect(true).toBe(true)`), `.skip`/`.only`-narrowed tests, 0-match runs, and gates run over placeholder code (`TODO`, stubbed returns) are not passes. The `pre-commit-check` hook statically surfaces the first two — always-true assertions and focused/disabled markers (`.only`/`.skip`/`fit`/`xit`) — over your *added* test lines as a soft advisory; the runtime fakes (0-match runs, gates over stubs) are not statically detectable and stay agent-judged.
 
 These apply to both the implementer and the QA sub-agent — a passing test suite the same run as the change is necessary but not sufficient for the three claim shapes above.
 

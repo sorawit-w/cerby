@@ -91,6 +91,30 @@ case ",${CODING_RULES_HOOK_DISABLED:-}," in
   *,pre-commit-check,*) exit 0 ;;
 esac
 
+# Hollow-test heuristic (soft) — statically surface the "green run that proves
+# nothing" fakes validation.md names: focused/disabled test markers and
+# always-true assertions, in ADDED lines of staged test files only. Added-only
+# means a teammate's pre-existing .skip never fires, and refactoring one OUT
+# never trips it. Runtime fakes (0-match runs, gates over stubbed code) stay
+# agent-judged — not statically detectable here. Soft like the reminder below:
+# kerby reserves the hard block (exit 2) for secrets, not correctness. Reports
+# COUNTS only — never echo raw test lines into the agent context. Pattern set is
+# apostrophe-free (see the bash 3.2 note below) and word-anchored so fit(/xit(
+# do not match the English word in a test description. Pathspecs are :(top)-
+# anchored so a commit run from a subdirectory still scans staged test files
+# repo-wide (a bare '*test*' is cwd-relative); .only/.skip permit a trailing dot
+# so chained forms (test.only.each, describe.skip.each) are caught too.
+HOLLOW_NOTE=""
+TEST_ADDED=$(git diff --cached --diff-filter=ACMR -U0 -- ':(top)*test*' ':(top)*spec*' ':(top)*Test*' ':(top)*Spec*' 2>/dev/null | grep -E '^\+[^+]')
+if [[ -n "$TEST_ADDED" ]]; then
+  FOCUS=$(printf '%s\n' "$TEST_ADDED" | grep -cE '\.only[ (.]|\.skip[ (.]|\bfdescribe\(|\bfit\(|\bxit\(|\bxdescribe\(|@pytest\.mark\.skip|@(Disabled|Ignore)\b|\bt\.Skip\(')
+  TRUE=$(printf '%s\n' "$TEST_ADDED" | grep -cE 'expect\( *true *\)\.(toBe\( *true *\)|toBeTruthy\()|assertTrue\( *[Tt]rue *\)|XCTAssertTrue\( *true *\)|assert\( *[Tt]rue *\)|assert +True\b')
+  if [[ "$FOCUS" -gt 0 || "$TRUE" -gt 0 ]]; then
+    HOLLOW_NOTE="
+HOLLOW-TEST CHECK (kerby): staged test changes added $FOCUS focused/disabled marker(s) (only/skip/fit/xit) and $TRUE always-true assertion(s). A focused test silently disables the rest of the suite; an always-true assert verifies nothing — both yield a green run that proves nothing (validation.md Iron Law). Inspect your staged test/spec files and confirm each is intentional before committing. Advisory only; does NOT block."
+  fi
+fi
+
 # Soft reminder — injected as context via JSON additionalContext (plain stdout on
 # exit 0 is ignored for PreToolUse); does not block. NOTE: a PreToolUse
 # additionalContext surfaces WITH the tool result (next turn), so this reminder
@@ -107,7 +131,7 @@ REMINDER="REMINDER (kerby): verify your changes against the project gates —
 1. lint on the changed files
 2. the test suite
 3. the build
-This advisory surfaces WITH the commit result and does NOT block it; if your changes broke any gate, run it and amend the commit. Pre-existing failures from other code are acceptable — do not block on them."
+This advisory surfaces WITH the commit result and does NOT block it; if your changes broke any gate, run it and amend the commit. Pre-existing failures from other code are acceptable — do not block on them.${HOLLOW_NOTE}"
 jq -n --arg ctx "$REMINDER" \
   '{hookSpecificOutput:{hookEventName:"PreToolUse",additionalContext:$ctx}}'
 
