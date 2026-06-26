@@ -127,9 +127,14 @@ if echo "$LC" | grep -qE "$GIT_COMMIT_RE"; then
   STRIPPED_LC=$(printf '%s' "$STRIPPED" | tr '[:upper:]' '[:lower:]')
   if echo "$STRIPPED_LC" | grep -qE "$GIT_COMMIT_RE"; then
     # Probe the repo the commit actually targets: `git -C <path> commit` commits in
-    # <path>, not the hook's cwd. Use the first -C of the remaining invocation; a
-    # bare commit uses cwd. (Residual: multiple -C / --git-dir — see threat-model.)
-    TARGET=$(printf '%s' "$STRIPPED" | grep -oE '\bgit[[:space:]]+-C[[:space:]]+[^[:space:]]+' | head -1 | sed -E 's/.*-C[[:space:]]+//')
+    # <path>, not the hook's cwd. Isolate the matched commit invocation first, then
+    # take its `-C` — git accepts globals in any order, so `-C` may sit after other
+    # globals (`git -c k=v -C /repo commit`), and a `-C` on a different sub-command
+    # (`git -C /x status && git commit`) must NOT be used. Match in original case:
+    # paths are case-sensitive and `-C` (chdir) ≠ `-c` (config). Last -C wins.
+    # (Residual: multiple commit invocations with differing -C, quoted paths.)
+    INVOC=$(printf '%s' "$STRIPPED" | grep -oE "$GIT_COMMIT_RE" | head -1)
+    TARGET=$(printf '%s' "$INVOC" | grep -oE '(^|[[:space:]])-C[[:space:]]+[^[:space:]]+' | tail -1 | sed -E 's/.*-C[[:space:]]+//')
     if [[ -n "$TARGET" ]]; then
       CURRENT=$(git -C "$TARGET" branch --show-current 2>/dev/null)
       git -C "$TARGET" rev-parse --verify -q HEAD >/dev/null 2>&1 && HAS_HEAD=1 || HAS_HEAD=0

@@ -19,9 +19,10 @@ Added (`hooks/protect-git.sh` section 7):
   repo is on a protected branch (`main`, `master`, `dev`, `develop`, `staging`, `trunk`,
   `release/*`). This is the hook's first check that reads live repo state, not only the
   command string. It parses the git **subcommand** (so `git log --grep=commit` is not a
-  commit) and resolves a single `git -C <path>` to probe that repo's branch rather than
-  the hook's cwd. A single PreToolUse pass can't fully model runtime git — multiple
-  `-C`/`--git-dir` or unknown global options are a documented residual (see
+  commit) and resolves `git -C <path>` — in any global-option position, e.g.
+  `git -c k=v -C <path> commit` — to probe that repo's branch rather than the hook's cwd.
+  A single PreToolUse pass can't fully model runtime git — multiple `-C`/`--git-dir`,
+  unknown global options, or quoted paths are a documented residual (see
   `references/threat-model.md`).
 - **Scoped, per-command override.** `CODING_RULES_ALLOW_PROTECTED_COMMIT=1` bypasses
   **only** the commit gate, for commits the user explicitly authorized. The hook detects

@@ -173,6 +173,18 @@ TGT_FEAT="$TMPROOT/tgt-feat"; repo_with_commit "$TGT_FEAT" feat/tgt
 run_in "$CWD_FEAT" "git -C $TGT_FEAT commit -m x"
 [[ "$RC" -eq 0 ]] && pass "allows: git -C <repo-on-feature> commit" || fail "-C feature target must allow (got $RC)"
 
+# -C after another global option must still resolve to the target repo (P1):
+# git accepts globals in any order, so -C may follow -c / --no-pager.
+run_in "$CWD_FEAT" "git -c user.name=x -C $TGT_MAIN commit -m y"
+[[ "$RC" -eq 2 ]] && pass "blocks: git -c k=v -C <repo-on-main> commit" || fail "-C after -c must block (got $RC)"
+run_in "$CWD_FEAT" "git --no-pager -C $TGT_MAIN commit -m y"
+[[ "$RC" -eq 2 ]] && pass "blocks: git --no-pager -C <repo-on-main> commit" || fail "-C after --no-pager must block (got $RC)"
+
+# a -C on a NON-commit sub-command must not be used for the commit's branch check:
+# the bare `git commit` here targets cwd (feat/cwd), so it is allowed.
+run_in "$CWD_FEAT" "git -C $TGT_MAIN status && git commit -m x"
+[[ "$RC" -eq 0 ]] && pass "allows: -C on a non-commit sub-command not used for commit" || fail "cross-invocation -C must not block (got $RC)"
+
 echo "---"
 if [[ "$FAILS" -eq 0 ]]; then
   echo "All assertions passed."
