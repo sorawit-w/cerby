@@ -106,18 +106,19 @@ These are not decoration. They are what every verdict comes back to:
 
 ## Status
 
-Current release: `5.7.0` — closes the **hollow-pass gap**. `validation.md` long *named* the
+Current release: `5.8.0` — closes the **repeated-literal drift gap**. `working-patterns.md`
+long told agents to *inline until a second caller forces the seam* but said nothing about what
+to do once that caller arrives — so the same allowed-values array gets re-typed at each call
+site, copies drift, and a bare literal has no IDE find-usages. The new **Hoist repeated
+literals to a single named source** rule names the move for that moment and draws a hard line
+between *deduplication* (one named in-code constant) and *externalization* (config/env), which
+the existing hardcoded-value rule still governs. See [CHANGELOG.md](CHANGELOG.md).
+
+Prior release: `5.7.0` — closed the **hollow-pass gap**. `validation.md` long *named* the
 green runs that prove nothing — always-true assertions, `.only`/`.skip` focused suites — but
 naming a fake is not catching one. `pre-commit-check.sh` now reads the diff: over the *added*
 lines of staged test files it statically flags focused/disabled markers and always-true
-assertions, as a soft advisory (counts only, never echoing a test line). It is the soft tier —
-the hard block stays reserved for secrets — and it is honest about its ceiling: 0-match runs
-and gates over stubs stay agent-judged. See [CHANGELOG.md](CHANGELOG.md).
-
-Prior release: `5.6.0` — closed the **commit-on-protected-branch gap**: `protect-git.sh`
-blocked only *pushing* to a protected branch, so an agent could still `git commit` straight
-onto `main`/`develop` and only hit a wall at push. Section 7 now hard-blocks the commit
-itself, with a *scoped*, inline escape hatch for user-authorized commits.
+assertions, as a soft advisory (counts only, never echoing a test line).
 
 **Opinionated — read first.** These are one author's rules. Read
 [`skills/kerby/resources/BOOTSTRAP.md`](skills/kerby/resources/BOOTSTRAP.md) end-to-end

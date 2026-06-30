@@ -3,6 +3,33 @@
 All notable changes to `kerby` are documented here. Format follows
 [Keep a Changelog](https://keepachangelog.com/); versioning is semver.
 
+## [5.8.0] — 2026-06-30
+
+Closed the **repeated-literal drift gap** in the code-standards rules. `working-patterns.md`
+has long told agents to *inline until a second caller forces the seam* — restraint against
+premature abstraction — but said nothing about what to do once that second caller actually
+arrives. So an agent would re-type the same allowed-values array (`['admin','editor','viewer']`)
+at each call site; the copies drift, edits scatter, and a bare literal has no find-usages for
+the IDE to follow. The new rule names the move for the moment the seam is forced, and draws a
+hard line between *deduplication* (one named constant, in code) and *externalization* (config/env),
+governed by the existing hardcoded-value rule — the two were silently conflated before.
+
+Added (`references/working-patterns.md` § Code Standards):
+
+- **Hoist repeated literals to a single named source.** When a literal — especially a set of
+  allowed values — is referenced at ≥2 real call sites (or would force multi-place edits if it
+  changed), define it once as a named exported constant and import it. In TypeScript, derive the
+  type from the constant (`as const` + `typeof X[number]`) so value and type can't drift. Framed
+  explicitly as deduplication, *not* externalization: the constant stays in code; the
+  environment-varies-or-gates-risk trigger in `validation.md` still governs config/env, and
+  secrets stay in `.env`.
+
+Also:
+
+- **`references/validation.md`.** A pointer on the hardcoded-value bullet distinguishing a
+  *repeated* in-code value (deduplication → the new rule) from an *externalizable* one (this
+  bullet), so agents stop conflating the two.
+
 ## [5.7.0] — 2026-06-26
 
 Closed the **hollow-pass gap** between the Iron Law and the gate. `validation.md` has long
