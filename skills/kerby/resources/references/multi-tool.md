@@ -95,10 +95,10 @@ Blocked-model safety: a blocked sub-agent model override falls back to the
 inherited/default model rather than failing the request. That's fine for an
 optional choice, but for the mandatory upgrade triggers above, silent
 fallback means the upgrade gate can appear satisfied while the sub-agent
-actually runs at the lower, un-upgraded tier — no error, no signal. For an
-approval-gated or blast-radius upgrade, verify the resolved model rather than
-assuming the requested alias took effect, and escalate instead of proceeding
-silently if it was blocked.
+actually runs at the lower, un-upgraded tier — no error, no signal. For any
+mandatory upgrade trigger — approval-gated, blast-radius, or divergence-retry
+— verify the resolved model rather than assuming the requested alias took
+effect, and escalate instead of proceeding silently if it was blocked.
 
 **Codex:** custom agent files support their own `model` and
 `model_reasoning_effort` fields (inherited from the parent session when
